@@ -16,8 +16,8 @@
     }
   },
   "scripts": {
-    "compact": "compactc src/counter.compact src/managed/counter",
-    "test": "vitest run",
+    "compact": "/home/js/utils_Midnight/my-binaries/compactc/compactc src/counter.compact src/managed/counter",
+   "test": "vitest run",
     "test:compile": "npm run compact && vitest run",
     "build": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/counter.compact ./dist",
     "lint": "eslint src",
