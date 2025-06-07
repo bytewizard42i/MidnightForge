@@ -1,0 +1,92 @@
+// ========================================================
+// File: contracts/02_protocol_wallet/protocol_wallet.compact
+// "protocol_wallet" layers folder registry and permission logic
+// on top of the base primitives. It references the base contract
+// for owner checks and counter usage.
+// ========================================================
+
+import CompactStandardLibrary;
+// Import base primitives for ownerKey and counter functions.
+import "../01_protocol_wallet_base/protocol_wallet_base.compact";
+
+// --------------------
+// === Types & Enums ===
+// --------------------
+
+enum FolderStatus { Active, Archived, Locked }
+enum PermissionLevel { None, Reader, Contributor, Admin, Owner }
+
+// --------------------
+// === Ledger State ===
+// --------------------
+
+// Maps folderID (UInt) to the on-chain address of that folder's contract.
+export ledger folderRegistry: Map<UInt, Bytes<32>>;
+
+// Tracks the status of each folder by its ID.
+export ledger folderStatus: Map<UInt, FolderStatus>;
+
+// Tracks the current highest folderID issued.
+export ledger folderCount: Counter;
+
+// ------------------------
+// === Constructor ===
+// ------------------------
+
+// No private inputs. We reuse the base contract's ownerKey via cross-contract calls.
+constructor() {
+    // Initialize folderCount; zero-initialized by default.
+    folderCount = counter(0);
+}
+
+// ------------------------------------------------
+// === Folder Management Circuits (Core Logic) ===
+// ------------------------------------------------
+
+// circuit: createFolder
+// - Verifies caller is the wallet owner via a ZK proof against base.ownerKey.
+// - Increments folderCount to generate a new unique folderID.
+// - Stores the folder contract address into folderRegistry.
+// - Marks the folder status as Active.
+// - Returns the new folderID.
+circuit createFolder(folderContractAddr: Bytes<32>,
+                     ownerSig: Signature): UInt {
+    // 1) Verify signature: ensures only owner can create folders.
+    assert(valid_signature(base.ownerKey(), ownerSig));
+
+    // 2) Generate a new folder ID.
+    let newId = increment(folderCount);
+
+    // 3) Record the folder contract address and status.
+    folderRegistry.set(newId, folderContractAddr);
+    folderStatus.set(newId, FolderStatus.Active);
+
+    // 4) Return the assigned ID.
+    return newId;
+}
+
+// circuit: archiveFolder
+// - Marks an existing folder as Archived. Only the owner can archive.
+circuit archiveFolder(folderId: UInt, ownerSig: Signature) {
+    assert(valid_signature(base.ownerKey(), ownerSig));
+    assert(folderStatus.get(folderId) == FolderStatus.Active);
+    folderStatus.set(folderId, FolderStatus.Archived);
+}
+
+// circuit: getFolderAddress
+// - Reads the stored address for a given folderID.
+circuit getFolderAddress(folderId: UInt): Bytes<32> {
+    return folderRegistry.get(folderId);
+}
+
+// circuit: listFolders
+// - Returns an array of all folderIDs created so far.
+circuit listFolders(): UInt[/* dynamic: read folderCount */] {
+    let count = read(folderCount);
+    let ids: UInt[count];
+    for (i in 0..count-1) {
+        ids[i] = i + 1;  // IDs start at 1
+    }
+    return ids;
+}
+

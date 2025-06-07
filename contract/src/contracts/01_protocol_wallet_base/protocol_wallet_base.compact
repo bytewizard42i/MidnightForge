@@ -1,0 +1,59 @@
+// ========================================================
+// File: contracts/01_protocol_wallet_base/protocol_wallet_base.compact
+// "protocol_wallet_base" provides minimal on-chain primitives that
+// serve as the foundation for higher-level wallet functionality.
+// It includes an owner key, simple counters, and base ledger types.
+// ========================================================
+
+import CompactStandardLibrary;
+
+// --------------------
+// === Ledger State ===
+// --------------------
+
+// The public key of the wallet owner, used for permission checks.
+export ledger ownerKey: Bytes<32>;
+
+// A generic counter that can be used for generating unique folder IDs,
+// transaction nonces, or any sequential numbering needed by higher levels.
+export ledger globalCounter: Counter;
+
+// ------------------------
+// === Constructor ===
+// ------------------------
+
+// The constructor initializes the ownerKey using the provided secret.
+// "sk" is the owner's private key; "public_key(round, sk)" derives the on-chain public key.
+constructor(sk: Bytes<32>) {
+    // Compute and store the owner's public key in ledger state.
+    ownerKey = public_key(globalCounter, sk);
+
+    // Initialize the counter to zero.
+    // Note: Counters are zero-initialized by default in Compact,
+    // but we include this for clarity and explicitness.
+    globalCounter = counter(0);
+}
+
+// ------------------------
+// === Basic Circuits ===
+// ------------------------
+
+// circuit: getOwnerKey
+// Returns the current owner public key for verifying ownership off-chain.
+circuit getOwnerKey(): Bytes<32> {
+    return ownerKey;
+}
+
+// circuit: incrementCounter
+// Increments the global counter by 1 and returns the new value.
+// This can be used by higher layers to create unique identifiers.
+circuit incrementCounter(): UInt {
+    let newCount = increment(globalCounter);
+    return newCount;
+}
+
+// circuit: getCounter
+// Reads the current value of the global counter without modifying it.
+circuit getCounter(): UInt {
+    return read(globalCounter);
+}

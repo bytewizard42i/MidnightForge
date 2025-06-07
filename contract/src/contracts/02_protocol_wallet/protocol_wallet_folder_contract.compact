@@ -1,0 +1,69 @@
+// ========================================================
+// File: contracts/02_protocol_wallet/folder_contract.compact
+// "folder_contract" encapsulates business logic for a single folder:
+// permissions, metadata, and interactive operations.
+// ========================================================
+
+import CompactStandardLibrary;
+import "protocol_wallet.compact";  // For shared enums & types
+
+// --------------------------------
+// === Ledger State (Per Folder) ===
+// --------------------------------
+
+// Unique ID for this folder, assigned by protocol_wallet.
+export ledger folderId: UInt;
+
+// Human-readable metadata (e.g. name, description).
+export ledger folderMetadata: Bytes<64>;
+
+// Maps userKey → permission level within this folder.
+export ledger permissions: Map<Bytes<32>, PermissionLevel>;
+
+// ------------------------
+// === Constructor ===
+// ------------------------
+
+// "id" and "metadata" are passed in by the root contract when deploying
+constructor(id: UInt, metadata: Bytes<64>) {
+    folderId = id;
+    folderMetadata = metadata;
+
+    // Default: assign Owner permission to the root wallet owner.
+    permissions.set(base.ownerKey(), PermissionLevel.Owner);
+}
+
+// --------------------------------
+// === Permission Circuits ===
+// --------------------------------
+
+// circuit: grantPermission
+// - Only an Admin or Owner in this folder can grant permissions.
+circuit grantPermission(
+    userKey: Bytes<32>,
+    level: PermissionLevel,
+    callerSig: Signature
+) {
+    let caller = recover_pk(callerSig);
+    let currPerm = permissions.get(caller);
+    assert(currPerm == PermissionLevel.Owner || currPerm == PermissionLevel.Admin);
+
+    permissions.set(userKey, level);
+}
+
+// circuit: revokePermission
+// - Only an Admin or Owner can revoke.
+circuit revokePermission(userKey: Bytes<32>, callerSig: Signature) {
+    let caller = recover_pk(callerSig);
+    let currPerm = permissions.get(caller);
+    assert(currPerm == PermissionLevel.Owner || currPerm == PermissionLevel.Admin);
+
+    permissions.set(userKey, PermissionLevel.None);
+}
+
+// circuit: getPermission
+// - Anyone can read a user’s permission level for this folder.
+circuit getPermission(userKey: Bytes<32>): PermissionLevel {
+    return permissions.get(userKey);
+}
+

@@ -1,0 +1,78 @@
+
+// ========================================================
+// File: contracts/03_privacy_did_nft/did_nft.compact
+// "did_nft" implements privacy-preserving credential NFTs
+// using Zero-Knowledge proofs and on-chain metadata.
+// ========================================================
+
+import CompactStandardLibrary;
+import "../02_protocol_wallet/issuer_contract.compact";
+
+// --------------------------------
+// === Types & Enums ===
+// --------------------------------
+
+enum CredentialType { Immutable, Mutable }
+
+// --------------------------------
+// === Ledger State ===
+// --------------------------------
+
+// Maps nftID → owner DID (public key)
+export ledger nftOwner: Map<UInt, Bytes<32>>;
+
+// Maps nftID → metadata hash or encrypted payload
+export ledger nftMetadata: Map<UInt, Bytes<64>>;
+
+// Next available nftID counter
+export ledger nftCount: Counter;
+
+// --------------------------------
+// === Constructor ===
+// --------------------------------
+
+constructor() {
+    nftCount = counter(0);
+}
+
+// --------------------------------
+// === NFT Minting Circuits ===
+// --------------------------------
+
+// circuit: mintCredential
+// - Only a trusted issuer (checked via issuer_contract) can mint.
+// - Supports both immutable and mutable credentials.
+circuit mintCredential(
+    didPk: Bytes<32>,             // recipient DID
+    metadata: Bytes<64>,          // encrypted/hashed credential data
+    credType: CredentialType,
+    issuerSig: Signature          // proof that issuer authorized this mint
+): UInt {
+    // 1) Recover issuer public key and verify trust
+    let issuerPk = recover_pk(issuerSig);
+    assert(issuer_contract.isTrustedIssuer(issuerPk));
+
+    // 2) Create new NFT ID
+    let id = increment(nftCount);
+
+    // 3) Assign ownership and metadata
+    nftOwner.set(id, didPk);
+    nftMetadata.set(id, metadata);
+
+    // 4) (Optional) enforce immutability
+    // Immutable credentials cannot be overwritten.
+    // For mutable, later circuits could allow updates.
+
+    return id;
+}
+
+// circuit: getOwner
+// - Returns the DID public key owning a given NFT.
+circuit getOwner(nftId: UInt): Bytes<32> {
+    return nftOwner.get(nftId);
+}
+
+// circuit: getMetadata
+circuit getMetadata(nftId: UInt): Bytes<64> {
+    return nftMetadata.get(nftId);
+}

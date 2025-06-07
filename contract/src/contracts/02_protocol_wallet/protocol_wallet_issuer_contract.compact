@@ -1,0 +1,47 @@
+// ========================================================
+// File: contracts/02_protocol_wallet/issuer_contract.compact
+// "issuer_contract" manages a registry of trusted issuers that can
+// mint credentials within folders.
+// ========================================================
+
+import CompactStandardLibrary;
+import "protocol_wallet.compact";
+
+// --------------------------------
+// === Ledger State ===
+// --------------------------------
+
+// Maps issuer public key → boolean (trusted or not).
+export ledger issuerRegistry: Map<Bytes<32>, Bool>;
+
+// ------------------------
+// === Constructor ===
+// ------------------------
+
+constructor() {
+    // No initial issuers; root wallet owner can add later.
+}
+
+// ------------------------
+// === Issuer Circuits ===
+// ------------------------
+
+// circuit: addIssuer
+// - Only the protocol wallet owner can register a new trusted issuer.
+circuit addIssuer(issuerKey: Bytes<32>, ownerSig: Signature) {
+    assert(valid_signature(base.ownerKey(), ownerSig));
+    issuerRegistry.set(issuerKey, true);
+}
+
+// circuit: revokeIssuer
+// - Only the protocol wallet owner can remove an issuer.
+circuit revokeIssuer(issuerKey: Bytes<32>, ownerSig: Signature) {
+    assert(valid_signature(base.ownerKey(), ownerSig));
+    issuerRegistry.set(issuerKey, false);
+}
+
+// circuit: isTrustedIssuer
+n// Returns true if the given key is in the registry and trusted.
+circuit isTrustedIssuer(pk: Bytes<32>): Bool {
+    return issuerRegistry.get(pk);
+}
