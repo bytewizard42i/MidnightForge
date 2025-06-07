@@ -178,3 +178,18 @@ export circuit revokePermission(
 export circuit getPermission(userKey: Bytes<32>): PermissionLevel {
     return permissions.get(userKey);
 }
+/*
+Explanation & Interactions:
+
+Ledger Variables persist across calls and store all folder state.
+
+Constructor sets up the folder and grants the deployer Owner rights.
+
+grantPermission/revokePermission use context-bound messages (persistent_hash) to ensure signatures can’t be replayed for other users or actions.
+
+Permission checks enforce that only high-level roles (Owner/Admin) can modify access.
+
+getPermission allows any caller to inspect a user’s access level for UI or off-chain logic.
+
+This full “Section 2” (folder_contract.compact) is now ready to slot into contracts/02_protocol_wallet/. Let me know if you’d like further edits or additional folder-level circuits!
+/
