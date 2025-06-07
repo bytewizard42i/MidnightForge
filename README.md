@@ -137,7 +137,7 @@ We ❤️ contributions! Please follow these guidelines:
 
 ## 📜 License
 
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **APACHE License**. See the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgements
 
@@ -147,4 +147,4 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 ---
 
-*Crafted with ❤️ by EnterpriseZK Labs*
+*Crafted with ❤️ by EnterpriseZK Labs in collaboration with Eddalabs mentorship*
