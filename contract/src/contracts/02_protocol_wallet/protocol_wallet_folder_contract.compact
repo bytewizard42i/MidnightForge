@@ -1,69 +1,180 @@
-// ========================================================
+// ================================================================================
 // File: contracts/02_protocol_wallet/folder_contract.compact
-// "folder_contract" encapsulates business logic for a single folder:
-// permissions, metadata, and interactive operations.
-// ========================================================
+// Purpose: Defines the per-folder smart contract for MidnightForge’s protocol wallet.
+//          Manages folder metadata and enforces fine-grained permissions.
+// ================================================================================
 
-import CompactStandardLibrary;
-import "protocol_wallet.compact";  // For shared enums & types
+import CompactStandardLibrary;          // Core Compact library for primitives
+import "./protocol_wallet.compact";     // Imports PermissionLevel enum and base interfaces
 
-// --------------------------------
-// === Ledger State (Per Folder) ===
-// --------------------------------
+// ----------------------------------------
+// === Ledger State (Persistent Storage) ===
+// ----------------------------------------
 
-// Unique ID for this folder, assigned by protocol_wallet.
+/*
+ * folderId
+ *   - A unique numeric identifier for this folder.
+ *   - Assigned by the root protocol_wallet when deploying.
+ */
 export ledger folderId: UInt;
 
-// Human-readable metadata (e.g. name, description).
+/*
+ * folderMetadata
+ *   - A 64-byte field for storing human-readable folder info (e.g., name, description).
+ *   - Can store JSON or an encrypted blob, as long as it fits 64 bytes.
+ */
 export ledger folderMetadata: Bytes<64>;
 
-// Maps userKey → permission level within this folder.
+/*
+ * permissions
+ *   - Maps each user’s public key (Bytes<32>) to their PermissionLevel in this folder.
+ *   - PermissionLevel is imported from protocol_wallet.compact:
+ *       • None       – no access
+ *       • Reader     – read-only
+ *       • Contributor– can submit proposals
+ *       • Admin      – can manage members
+ *       • Owner      – full control
+ */
 export ledger permissions: Map<Bytes<32>, PermissionLevel>;
 
 // ------------------------
-// === Constructor ===
+// === Constructor Logic ===
 // ------------------------
 
-// "id" and "metadata" are passed in by the root contract when deploying
 constructor(id: UInt, metadata: Bytes<64>) {
+    /*
+     * Called by protocol_wallet.createFolder().
+     * 1. Store the assigned folder ID.
+     * 2. Store the initial metadata blob.
+     * 3. Grant Owner permission to the wallet’s ownerKey.
+     */
     folderId = id;
     folderMetadata = metadata;
 
-    // Default: assign Owner permission to the root wallet owner.
-    permissions.set(base.ownerKey(), PermissionLevel.Owner);
+    // Fetch the on-chain owner key from the base contract
+    let rootOwner = base.getOwnerKey();
+
+    // Initialize permissions: root owner is the folder Owner
+    permissions.set(rootOwner, PermissionLevel.Owner);
 }
 
-// --------------------------------
-// === Permission Circuits ===
-// --------------------------------
+// -------------------------------------
+// === Circuit: grantPermission() ===
+// -------------------------------------
 
-// circuit: grantPermission
-// - Only an Admin or Owner in this folder can grant permissions.
-circuit grantPermission(
+/*
+ * export circuit: grantPermission
+ * -------------------------------------------------
+ * Allows an Admin or Owner to grant a specific PermissionLevel
+ * to another userKey within this folder.
+ *
+ * Parameters:
+ *   userKey   – the Bytes<32> public key of the user to grant access
+ *   level     – the PermissionLevel to assign (None, Reader, Contributor, Admin, Owner)
+ *   callerKey – the Bytes<32> public key of the caller (must match signature)
+ *   signature – a 64-byte signature over the “grant” message
+ *
+ * Workflow:
+ *   1. Construct a unique message that ties:
+ *        • the action (“grant”)
+ *        • this folder’s ID
+ *        • the target userKey
+ *   2. Verify the signature against callerKey.
+ *   3. Fetch caller’s existing PermissionLevel.
+ *   4. Ensure caller is Owner or Admin.
+ *   5. Update permissions for userKey.
+ */
+export circuit grantPermission(
     userKey: Bytes<32>,
     level: PermissionLevel,
-    callerSig: Signature
+    callerKey: Bytes<32>,
+    signature: Bytes<64>
 ) {
-    let caller = recover_pk(callerSig);
-    let currPerm = permissions.get(caller);
-    assert(currPerm == PermissionLevel.Owner || currPerm == PermissionLevel.Admin);
+    // 1) Build the signed message to prevent replay attacks
+    let msg = persistent_hash<Vector<3, Bytes<32>>>([
+        pad(32, "midnight:folder:grant"),    // 32-byte namespace tag
+        folderId as Bytes<32>,               // cast UInt → Bytes<32>
+        userKey                              // recipient’s key
+    ]);
 
+    // 2) Verify signature: only key holder can call
+    assert verifySignature(callerKey, signature, msg)
+        "ERR_SIG: invalid grant signature";
+
+    // 3) Check caller’s current permission
+    let callerPerm = permissions.get(callerKey);
+    assert callerPerm != PermissionLevel.None
+        "ERR_PERM: caller has no permissions";
+
+    assert (callerPerm == PermissionLevel.Owner ||
+            callerPerm == PermissionLevel.Admin)
+        "ERR_PERM: insufficient permissions to grant";
+
+    // 4) Assign the new permission level
     permissions.set(userKey, level);
 }
 
-// circuit: revokePermission
-// - Only an Admin or Owner can revoke.
-circuit revokePermission(userKey: Bytes<32>, callerSig: Signature) {
-    let caller = recover_pk(callerSig);
-    let currPerm = permissions.get(caller);
-    assert(currPerm == PermissionLevel.Owner || currPerm == PermissionLevel.Admin);
+// --------------------------------------
+// === Circuit: revokePermission() ===
+// --------------------------------------
 
+/*
+ * export circuit: revokePermission
+ * -------------------------------------------------
+ * Allows an Admin or Owner to revoke all permissions
+ * from a specific userKey within this folder.
+ *
+ * Parameters:
+ *   userKey   – the Bytes<32> public key of the user to revoke
+ *   callerKey – the Bytes<32> public key of the caller
+ *   signature – a 64-byte signature over the “revoke” message
+ *
+ * Workflow mirrors grantPermission, but sets level to None.
+ */
+export circuit revokePermission(
+    userKey: Bytes<32>,
+    callerKey: Bytes<32>,
+    signature: Bytes<64>
+) {
+    // 1) Build unique revoke message
+    let msg = persistent_hash<Vector<3, Bytes<32>>>([
+        pad(32, "midnight:folder:revoke"),
+        folderId as Bytes<32>,
+        userKey
+    ]);
+
+    // 2) Verify caller’s signature
+    assert verifySignature(callerKey, signature, msg)
+        "ERR_SIG: invalid revoke signature";
+
+    // 3) Ensure caller has rights
+    let callerPerm = permissions.get(callerKey);
+    assert callerPerm != PermissionLevel.None
+        "ERR_PERM: caller has no permissions";
+
+    assert (callerPerm == PermissionLevel.Owner ||
+            callerPerm == PermissionLevel.Admin)
+        "ERR_PERM: insufficient permissions to revoke";
+
+    // 4) Remove the user’s permissions
     permissions.set(userKey, PermissionLevel.None);
 }
 
-// circuit: getPermission
-// - Anyone can read a user’s permission level for this folder.
-circuit getPermission(userKey: Bytes<32>): PermissionLevel {
+// ------------------------------------
+// === Circuit: getPermission() ===
+// ------------------------------------
+
+/*
+ * export circuit: getPermission
+ * -----------------------------
+ * Public read-only circuit.
+ * Returns the PermissionLevel for a given userKey.
+ *
+ * Parameters:
+ *   userKey – Bytes<32> of the user whose permissions to query.
+ *
+ * No signature needed; this is a public view.
+ */
+export circuit getPermission(userKey: Bytes<32>): PermissionLevel {
     return permissions.get(userKey);
 }
-
