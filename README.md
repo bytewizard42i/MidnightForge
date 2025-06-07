@@ -5,7 +5,6 @@
 ---
 
 ## 📖 Table of Contents
-
 1. [✨ Overview](#-overview)
 2. [🌟 Goals](#-goals)
 3. [🚀 Key Features](#-key-features)
@@ -17,114 +16,118 @@
 9. [🔍 AI-Powered Collaboration](#-ai-powered-collaboration)
 10. [💻 Usage Example](#-usage-example)
 11. [🧪 Testing](#-testing)
-12. [🤝 Contributing](#-contributing)
-13. [📜 License](#-license)
-14. [🙏 Acknowledgements](#-acknowledgements)
+12. [📚 Examples](#-examples)
+13. [📝 Next Steps](#-next-steps)
+14. [🤝 Contributing](#-contributing)
+15. [📜 License](#-license)
+16. [🙏 Acknowledgements](#-acknowledgements)
 
 ---
 
 ## ✨ Overview
+**MidnightForge** is a modular, protocol-level wallet system on Cardano’s Midnight selective-privacy blockchain. It enables:
 
-**MidnightForge** empowers developers and communities with a **foldered, protocol-level wallet** on Cardano’s Midnight network, featuring:
+- 🔒 **Privacy-Preserving DID NFTs** for verifiable credentials
+- 📂 **Folder-Based Smart Contracts** with pluggable logic per folder
+- 🤖 **Automated GitHub Bots** and **AI Engines** for education, collaboration, and compensation
+- ⚙️ **Seamless Integration** with Midnight Lace, CLI tools, and front-end SDKs
 
-* 🔒 **Privacy-Preserving DID NFTs** as verifiable credentials
-* 📂 **Folder-Based Smart Contracts** with pluggable logic per folder
-* 🤖 **Automated Governance & Bots** for education, collaboration, and compensation
-* ⚙️ **Seamless Wallet Integrations** (Midnight Lace, browser wallets)
-
-By combining **DID authorization**, **proof-of-participation**, **proof-of-reputation**, and **proof-of-credentials**, MidnightForge creates a semi-decentralized ecosystem that guides contributors from learning to earning.
+From **learning** to **earning**, MidnightForge orchestrates DID authorization, proof-of-participation, reputation, and micro-payments through an end-to-end workflow.
 
 ---
 
 ## 🌟 Goals
+| 🎓 Education       | 🤝 Collaboration             | 💰 Compensation                |
+|--------------------|------------------------------|--------------------------------|
+| Guided tutorials   | Auto-assign issues via bots  | On-chain micro-payments        |
+| Credential tests   | Reputation-based workflows   | Escrow & milestone payouts     |
+| Skill endorsements | Redundant tooling detection  | GitHub bounties integration    |
 
-| 🎓 Education       | 🤝 Collaboration            | 💰 Compensation                |
-| ------------------ | --------------------------- | ------------------------------ |
-| Layered learn-path | Automated issue assignment  | Micro-payments via DID rewards |
-| Credential tests   | Reputation-based workflows  | Escrow & milestone payouts     |
-| Skill endorsements | Redundant tooling detection | GitHub bounty integrations     |
-
-1. **Education**: Onboard via guided tutorials, automated DID-backed skill assessments, and credential issuance.
-2. **Collaboration**: Match users to issues based on reputation & intent gleaned by AI bots; reward knowledge sharing.
-3. **Compensation**: Authorize payouts through semi-decentralized schemas, ensuring transparent, on-chain settlements.
+1. **Education**: Onboard contributors with automated DID-backed assessments.
+2. **Collaboration**: Match skills & reputation to issues via AI bots.
+3. **Compensation**: Release payments through semi-decentralized, transparent smart contracts.
 
 ---
 
 ## 🚀 Key Features
-
-| Layer                          | Functionality                                                                                    |
-| ------------------------------ | ------------------------------------------------------------------------------------------------ |
-| **01\_protocol\_wallet\_base** | Core on-chain primitives: ownerKey, counters, base ledger types                                  |
-| **02\_protocol\_wallet**       | Folder registry, permission contracts, issuer registry, and DID authorization circuits           |
-| **03\_privacy\_did\_nft**      | ZK-powered DID NFTs for credentials, reputation proofs, and authority grants                     |
-| **GitHub Bots**                | Deployable bots that auto-assign issues, verify DID proofs, and trigger payments                 |
-| **AI-Intent Engine**           | Scans repos to identify redundancy, recommends collaborations, and curates educational resources |
+| Layer                            | Functionality                                                                   |
+|----------------------------------|---------------------------------------------------------------------------------|
+| **01_protocol_wallet_base**      | Core on-chain primitives: ownerKey, globalCounter                                |
+| **02_protocol_wallet**           | Folder registry, create/archive, status, basic read API                         |
+| **02_protocol_wallet/folder**    | Per-folder permissions: grant, revoke, query                                     |
+| **02_protocol_wallet/issuer**    | Trusted issuer registry: add, revoke, verify                                     |
+| **03_privacy_did_nft**           | ZK-powered DID NFTs: mint, owner, metadata                                       |
+| **CLI (`counter-cli/`)**         | Command-line interaction with your protocols                                    |
+| **Bots (`bots/`)**               | GitHub Assigner & Verifier for automated workflows                              |
+| **AI Engine (`ai-engine/`)**     | Intent detection, redundancy checks, collaboration recommendations               |
+| **SDK (`contract/src/index.ts`)**| TypeScript bindings for all contracts                                           |
 
 ---
 
 ## 📂 Repository Structure
-
 ```text
 MidnightForge/
-├── contracts/
-│   ├── 01_protocol_wallet_base/
-│   │   └── protocol_wallet_base.compact
-│   ├── 02_protocol_wallet/
-│   │   ├── protocol_wallet.compact
-│   │   ├── folder_contract.compact
-│   │   └── issuer_contract.compact
-│   └── 03_privacy_did_nft/
-│       └── did_nft.compact
-│
-├── bots/                  # GitHub bot implementations and configs
-│   ├── assigner/          # auto-issue assignment logic
-│   └── verifier/          # DID proof validation hooks
-│
-├── ai-engine/             # AI modules for intent detection & redundancy checks
-│   └── intent.ts
-│
-├── mesh.js/
-│   ├── deploy.ts          # Deployment scripts for contracts & bots
-│   └── interfaces.ts      # TypeScript bindings
-│
-├── scripts/
-│   └── deploy.sh
-│
-├── tests/
-│   ├── 01_protocol_wallet_base.test.ts
-│   ├── 02_protocol_wallet/
-│   │   ├── protocol_wallet.test.ts
-│   │   ├── folder_contract.test.ts
-│   │   └── issuer_contract.test.ts
-│   └── 03_privacy_did_nft.test.ts
-│
+├── .github/                 # CI workflows & PR templates
+├── CHANGELOG.md
+├── CODE_OF_CONDUCT.md
+├── CONTRIBUTING.md
+├── LICENSE
+├── README.md
 ├── package.json
 ├── tsconfig.json
-└── README.md
+├── vitest.config.ts
+│
+├── contract/                # Smart-contract code & SDK
+│   └── src/
+│       ├── contracts/
+│       │   ├── 01_protocol_wallet_base/
+│       │   │   └── protocol_wallet_base.compact
+│       │   ├── 02_protocol_wallet/
+│       │   │   ├── protocol_wallet.compact
+│       │   │   ├── folder_contract.compact
+│       │   │   └── issuer_contract.compact
+│       │   └── 03_privacy_did_nft/
+│       │       └── did_nft.compact
+│       ├── index.ts         # JS/TS SDK exports
+│       └── test/            # Vitest suites for each contract
+│
+├── counter-cli/             # CLI for example counter & protocol testing
+│   └── src/
+│       └── index.ts
+│
+├── bots/                    # GitHub App implementations
+│   ├── assigner/            # Auto-assign issue logic
+│   └── verifier/            # DID proof validation hooks
+│
+├── ai-engine/               # AI modules for repo analysis
+│   └── intent.ts            # Intent gleaning & redundancy detection
+│
+├── examples/                # End-to-end deployment & usage scripts
+│   └── basic-demo.ts
+│
+└── scripts/                 # Shell helpers
+    └── deploy.sh
 ```
 
 ---
 
 ## 🛠️ Getting Started
-
 ### Prerequisites
-
-* **Node.js** ≥ v16.x & **npm**/**yarn**
-* **CompactC** compiler (v1.x.x)
-* **Cardano Node** & **Ogmius** locally or testnet
+- **Node.js** ≥ v16.x & **npm**/yarn
+- **CompactC** compiler (v1.x.x) in PATH
+- **Cardano Node** & **Ogmius** for local testnet
 
 ### Installation
-
 ```bash
+# Clone and install dependencies
 git clone https://github.com/bytewizard42i/MidnightForge.git
 cd MidnightForge
-npm install  # or yarn install
+npm install
 ```
 
 ---
 
 ## ⚡ Build & Compile
-
 ```bash
 npm run build:base     # Compile 01_protocol_wallet_base
 npm run build:wallet   # Compile 02_protocol_wallet
@@ -135,83 +138,97 @@ npm run build          # All layers in order
 ---
 
 ## 🚀 Deployment
-
 ```bash
-# Deploy smart contracts & bots via mesh.js
+# Deploy contracts & bots via mesh.js
 npm run deploy
-# Or using shell helper
-yes "./scripts/deploy.sh"
+# Or use the shell script
+./scripts/deploy.sh
 ```
 
 ---
 
 ## 💡 Automated DID Workflow
-
-1. **Onboard**: User signs up via Discord/GitHub OAuth and submits DID.
-2. **Assess**: Bot issues educational quests; upon completion, DID NFT credential is minted.
-3. **Collaborate**: AI engine analyzes open issues, assigns based on skills & reputation.
-4. **Verify**: Bot validates DID proofs on PRs, updates reputation.
-5. **Compensate**: Upon merge, smart-contract escrow releases payment to contributor’s DID wallet.
+1. **Onboard**: User registers DID via GitHub OAuth.
+2. **Assess**: Bot issues learning quests; mints DID NFT upon completion.
+3. **Collaborate**: AI engine assigns issues to qualified users.
+4. **Verify**: Verifier bot checks DID proofs on PRs and updates reputation.
+5. **Compensate**: Smart contracts release escrowed payments to contributor’s DID wallet.
 
 ---
 
 ## 🔍 AI-Powered Collaboration
-
-* **Intent Gleaning**: AI scans repo activity, labels issues by topic & skill.
-* **Redundancy Detection**: Flags duplicate tooling efforts, suggests merging work.
-* **Incentive Matching**: Recommends collaborators and sets micro-bounties automatically.
+- **Intent Gleaning**: AI scans repo activity and labels tasks by skill.
+- **Redundancy Detection**: Flags duplicate tooling efforts.
+- **Incentive Matching**: Suggests collaborators and sets micro-bounties.
 
 ---
 
 ## 💻 Usage Example
-
 ```ts
-import { ProtocolWallet } from "./mesh.js/interfaces";
+import { ProtocolWallet, DIDzNFT } from "./contract/src/index";
 import { GitHubAssignerBot } from "./bots/assigner";
 
-async function main() {
+async function demo() {
   const wallet = new ProtocolWallet(signer);
-  await wallet.createFolder("Advanced Tutorials");
-  await wallet.registerIssuer("EduBot", eduBotKey);
+  const folderId = await wallet.createFolder("Tutorials", ownerSig);
+
+  const nft = new DIDzNFT(signer);
+  const credId = await nft.mintCredential(userDid, metadata, type, issuerSig);
 
   const bot = new GitHubAssignerBot(wallet, "org/MidnightForge");
-  bot.start();  // auto-assign educational issues
+  bot.start();
 }
 ```
 
 ---
 
 ## 🧪 Testing
-
 ```bash
 npm test
 ```
 
-Ensure all unit & integration tests pass, including bot hooks and AI engine modules.
+Covers Vitest suites for all contracts, CLI, bots, and AI modules.
+
+---
+
+## 📚 Examples
+Browse `/examples/basic-demo.ts` for a step-by-step walkthrough:
+1. Deploy base & protocol wallets
+2. Deploy folder & NFT contracts
+3. Register issuers & mint credentials
+4. On-chain interactions via CLI/SDK
+
+---
+
+## 📝 Next Steps
+- ✅ Merge and protect `main` via branch protection
+- ✅ Add CI for `build`, `test`, and `deploy` workflows
+- ✏️ Extend tests for edge cases (replay attacks, invalid states)
+- 🔒 Conduct a security audit of all Compact circuits
+- 🎨 Prototype a React UI using `mesh.js` and Midnight Lace
+- 🤖 Deploy GitHub bots to a test org and refine issue workflows
+- 🤖 Enhance AI engine for advanced collaboration insights
 
 ---
 
 ## 🤝 Contributing
-
-1. Fork & clone the repo.
-2. Create a feature branch (`feature/awesome`).
-3. Write tests for your changes.
-4. Submit a PR; ensure CI and peer reviews complete.
-
-**We ❤ community-driven growth!**
+We ❤️ community contributions!
+1. Fork the repo & create a feature branch.
+2. Write tests for new features.
+3. Submit a PR and request a review.
+4. Ensure CI checks pass before merging.
 
 ---
 
 ## 📜 License
-
-Released under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 ---
 
 ## 🙏 Acknowledgements
+- **Cardano & Midnight** for the selective-privacy foundation.
+- **EnterpriseZK Labs** for vision and sponsorship.
+- **Community contributors** for testing and feedback.
+- **Kapa.ai** and **GPT** for development insights.
 
-* **Cardano & Midnight** for the selective-privacy foundation.
-* **EnterpriseZK Labs** for vision and support.
-* **Community Contributors** for feedback, testing, and ideas.
-
-*Built with 💜 by EnterpriseZK Labs & the MidnightForge community with collaboration of Eddalabs mentorship.*
+*Crafted with 💜 by John Santi & the MidnightForge team.*
