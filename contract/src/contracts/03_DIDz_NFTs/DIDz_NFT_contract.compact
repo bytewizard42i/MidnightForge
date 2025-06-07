@@ -1,78 +1,196 @@
 
-// ========================================================
-// File: contracts/03_privacy_did_nft/did_nft.compact
-// "did_nft" implements privacy-preserving credential NFTs
-// using Zero-Knowledge proofs and on-chain metadata.
-// ========================================================
+// File: /home/js/utils_Midnight/MidnightForge/contract/src/contracts/02_protocol_wallet/protocol_wallet.compact
+// Purpose: Core protocol‐level wallet contract for MidnightForge.
+//          Manages folder registration, lifecycle, and simple read APIs.
 
-import CompactStandardLibrary;
-import "../02_protocol_wallet/issuer_contract.compact";
+import CompactStandardLibrary;                                            // Core Compact primitives
+import "../01_protocol_wallet_base/protocol_wallet_base.compact" as base; // Base primitives: ownerKey & counter
+import "./issuer_contract.compact" as issuer_contract;                    // For trusted‐issuer checks
 
-// --------------------------------
+// ----------------------------------------
 // === Types & Enums ===
-// --------------------------------
+// ----------------------------------------
 
-enum CredentialType { Immutable, Mutable }
+/*
+ * FolderStatus:
+ *   • Active   – folder is live
+ *   • Archived – folder has been retired
+ *   • Locked   – folder is temporarily frozen
+ */
+enum FolderStatus { Active, Archived, Locked }
 
-// --------------------------------
+// ----------------------------------------
 // === Ledger State ===
-// --------------------------------
+// ----------------------------------------
 
-// Maps nftID → owner DID (public key)
-export ledger nftOwner: Map<UInt, Bytes<32>>;
+/*
+ * folderRegistry:
+ *   Map< Field (folderId) → Bytes<32> (folder contract address) >
+ *   Stores the on‐chain address for each created folder.
+ */
+export ledger folderRegistry: Map<Field, Bytes<32>>;
 
-// Maps nftID → metadata hash or encrypted payload
-export ledger nftMetadata: Map<UInt, Bytes<64>>;
+/*
+ * folderStatus:
+ *   Map< Field → FolderStatus >
+ *   Tracks the current status of each folderId.
+ */
+export ledger folderStatus: Map<Field, FolderStatus>;
 
-// Next available nftID counter
-export ledger nftCount: Counter;
+/*
+ * folderCount:
+ *   A Counter that auto‐increments to allocate unique folder IDs.
+ *   Defaults to zero at deployment.
+ */
+export ledger folderCount: Counter;
 
-// --------------------------------
+// ----------------------------------------
 // === Constructor ===
-// --------------------------------
+// ----------------------------------------
 
 constructor() {
-    nftCount = counter(0);
+    // No explicit init required:
+    // • folderCount starts at 0
+    // • maps are empty by default
 }
 
-// --------------------------------
-// === NFT Minting Circuits ===
-// --------------------------------
+// ----------------------------------------
+// === Circuit: createFolder() ===
+// ----------------------------------------
 
-// circuit: mintCredential
-// - Only a trusted issuer (checked via issuer_contract) can mint.
-// - Supports both immutable and mutable credentials.
-circuit mintCredential(
-    didPk: Bytes<32>,             // recipient DID
-    metadata: Bytes<64>,          // encrypted/hashed credential data
-    credType: CredentialType,
-    issuerSig: Signature          // proof that issuer authorized this mint
-): UInt {
-    // 1) Recover issuer public key and verify trust
-    let issuerPk = recover_pk(issuerSig);
-    assert(issuer_contract.isTrustedIssuer(issuerPk));
+/*
+ * export circuit createFolder
+ * -----------------------------------------------------------------------
+ * Registers a new folder under this wallet:
+ *   1. Builds a domain‐separated message including the folder contract address.
+ *   2. Verifies the owner’s signature over that message.
+ *   3. Increments folderCount to obtain a new folderId.
+ *   4. Stores the folder address and marks it Active.
+ *   5. Returns the new folderId for reference.
+ *
+ * Params:
+ *   folderContractAddr – Bytes<32> address of the deployed folder contract
+ *   ownerSignature     – Bytes<64> signature by base.ownerKey over the message
+ *
+ * Returns:
+ *   Field (the assigned folderId)
+ */
+export circuit createFolder(
+    folderContractAddr: Bytes<32>,
+    ownerSignature: Bytes<64>
+): Field {
+    // 1) Domain‐separated message to sign
+    let msg = persistent_hash<Vector<2, Bytes<32>>>([
+        pad(32, "midnight:protocol:createFolder"),  // namespace tag
+        folderContractAddr                          // payload
+    ]);
 
-    // 2) Create new NFT ID
-    let id = increment(nftCount);
+    // 2) Verify that only the wallet owner can create folders
+    assert verifySignature(base.getOwnerKey(), ownerSignature, msg)
+        "ERR_SIG: invalid createFolder signature";
 
-    // 3) Assign ownership and metadata
-    nftOwner.set(id, didPk);
-    nftMetadata.set(id, metadata);
+    // 3) Allocate a new folder ID
+    folderCount += 1;
+    let newId = folderCount;
 
-    // 4) (Optional) enforce immutability
-    // Immutable credentials cannot be overwritten.
-    // For mutable, later circuits could allow updates.
+    // 4) Register the folder and set its initial status
+    folderRegistry[newId] = folderContractAddr;
+    folderStatus[newId]   = FolderStatus.Active;
 
-    return id;
+    return newId;
 }
 
-// circuit: getOwner
-// - Returns the DID public key owning a given NFT.
-circuit getOwner(nftId: UInt): Bytes<32> {
-    return nftOwner.get(nftId);
+// ----------------------------------------
+// === Circuit: archiveFolder() ===
+// ----------------------------------------
+
+/*
+ * export circuit archiveFolder
+ * -----------------------------------------------------------------------
+ * Marks a folder as Archived (read‐only):
+ *   1. Builds and verifies owner’s signature.
+ *   2. Checks that the folder is currently Active.
+ *   3. Updates its status to Archived.
+ *
+ * Params:
+ *   folderId       – Field identifier of the folder
+ *   ownerSignature – Bytes<64> signature by base.ownerKey over the message
+ */
+export circuit archiveFolder(
+    folderId: Field,
+    ownerSignature: Bytes<64>
+) {
+    // 1) Domain‐separated message
+    let msg = persistent_hash<Vector<2, Bytes<32>>>([
+        pad(32, "midnight:protocol:archiveFolder"),
+        folderId as Bytes<32>
+    ]);
+
+    // 2) Signature check
+    assert verifySignature(base.getOwnerKey(), ownerSignature, msg)
+        "ERR_SIG: invalid archiveFolder signature";
+
+    // 3) State check: must be Active to archive
+    assert folderStatus[folderId] == FolderStatus.Active
+        "ERR_STATE: only Active folders can be archived";
+
+    // 4) Apply status change
+    folderStatus[folderId] = FolderStatus.Archived;
 }
 
-// circuit: getMetadata
-circuit getMetadata(nftId: UInt): Bytes<64> {
-    return nftMetadata.get(nftId);
+// ----------------------------------------
+// === Circuit: getFolderAddress() ===
+// ----------------------------------------
+
+/*
+ * export circuit getFolderAddress
+ * -----------------------------------------------------------------------
+ * Public view: returns the on‐chain address for a given folderId.
+ *
+ * Params:
+ *   folderId – Field identifier of the folder
+ *
+ * Returns:
+ *   Bytes<32> – stored folder contract address
+ */
+export circuit getFolderAddress(folderId: Field): Bytes<32> {
+    return folderRegistry[folderId];
 }
+
+// ----------------------------------------
+// === Circuit: listFolders() ===
+// ----------------------------------------
+
+/*
+ * export circuit listFolders
+ * -----------------------------------------------------------------------
+ * Public view: returns a dense array of all folder IDs [1..folderCount].
+ * Useful for front‐ends or indexers to enumerate existing folders.
+ *
+ * Returns:
+ *   Field[] – a list of numeric folder IDs
+ */
+export circuit listFolders(): Field[] {
+    let total = folderCount;
+    let ids: Field[total];
+    for (i in 0..total-1) {
+        ids[i] = (i + 1) as Field;
+    }
+    return ids;
+}
+/*
+Key Improvements & Conventions
+
+Domain separation via persistent_hash + pad(...) prevents cross‐action replay.
+
+Signature checks ensure only the owner can modify registry state.
+
+Direct map access (map[key] = value) per Compact syntax.
+
+Verbose comments clarify each ledger variable and circuit.
+
+Consistent Field‐based IDs align with Compact’s type rules.
+
+Let me know if you’d like to add more circuits (e.g., lockFolder, deleteFolder) o integrate these with your front‐end tests!
+–Alice
+*/
