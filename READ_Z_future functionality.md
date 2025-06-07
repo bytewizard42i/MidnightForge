@@ -321,3 +321,36 @@ Initialize v2’s state accordingly.
 Emit ContractUpgraded(1, 2) in v2 constructor or a dedicated circuit.
 
 Off-chain: SDK checks contractVersion and warns if incompatible
+
+MidnightForge/
+├── contract/
+│   └── src/
+│       ├── contracts/
+│       │   ├── 01_protocol_wallet_base/
+│       │   │   └── protocol_wallet_base.compact
+│       │   ├── 02_protocol_wallet/
+│       │   │   ├── protocol_wallet.compact
+│       │   │   ├── folder_contract.compact
+│       │   │   └── issuer_contract.compact
+│       │   └── 03_privacy_did_nft/
+│       │       └── did_nft.compact
+│       ├── index.ts
+│       └── witnesses.ts
+│
+├── tests/                                ← root‐level Vitest suites
+│   ├── 01_protocol_wallet_base.test.ts   ← tests for protocol_wallet_base
+│   │
+│   ├── 02_protocol_wallet/               ← tests for protocol_wallet layer
+│   │   ├── protocol_wallet.test.ts
+│   │   ├── folder_contract.test.ts
+│   │   └── issuer_contract.test.ts
+│   │
+│   └── 03_privacy_did_nft.test.ts        ← tests for DIDz NFT contract
+│
+├── bots/
+├── ai-engine/
+├── examples/
+├── scripts/
+├── package.json
+├── tsconfig.json
+└── README.md
