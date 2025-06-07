@@ -1,92 +1,186 @@
-// ========================================================
-// File: contracts/02_protocol_wallet/protocol_wallet.compact
-// "protocol_wallet" layers folder registry and permission logic
-// on top of the base primitives. It references the base contract
-// for owner checks and counter usage.
-// ========================================================
+// File: /home/js/utils_Midnight/MidnightForge/contract/src/contracts/02_protocol_wallet/protocol_wallet.compact
+// Purpose: Core protocol‐level wallet contract for MidnightForge.
+//          Manages folder registry, lifecycle, and basic read API.
 
-import CompactStandardLibrary;
-// Import base primitives for ownerKey and counter functions.
-import "../01_protocol_wallet_base/protocol_wallet_base.compact";
+import CompactStandardLibrary;                                           // Core Compact primitives
+import "../01_protocol_wallet_base/protocol_wallet_base.compact" as base; // Base primitives: ownerKey & counter
 
-// --------------------
+// ----------------------------------------
 // === Types & Enums ===
-// --------------------
+// ----------------------------------------
 
+/*
+ * FolderStatus:
+ *   • Active   – folder is live and can be used
+ *   • Archived – folder is retired but history preserved
+ *   • Locked   – folder is temporarily frozen
+ */
 enum FolderStatus { Active, Archived, Locked }
+
+/*
+ * PermissionLevel: (used by folder_contract)
+ *   • None        – no access
+ *   • Reader      – read‐only
+ *   • Contributor – propose changes
+ *   • Admin       – manage members & metadata
+ *   • Owner       – full control
+ */
 enum PermissionLevel { None, Reader, Contributor, Admin, Owner }
 
-// --------------------
+// ----------------------------------------
 // === Ledger State ===
-// --------------------
+// ----------------------------------------
 
-// Maps folderID (UInt) to the on-chain address of that folder's contract.
-export ledger folderRegistry: Map<UInt, Bytes<32>>;
+/*
+ * folderRegistry:
+ *   Map from folder ID (Field) → on‐chain address (Bytes<32>) of that folder’s contract.
+ */
+export ledger folderRegistry: Map<Field, Bytes<32>>;
 
-// Tracks the status of each folder by its ID.
-export ledger folderStatus: Map<UInt, FolderStatus>;
+/*
+ * folderStatus:
+ *   Map from folder ID → FolderStatus enum.
+ */
+export ledger folderStatus: Map<Field, FolderStatus>;
 
-// Tracks the current highest folderID issued.
+/*
+ * folderCount:
+ *   A Counter storing how many folders have been created.
+ *   Used to generate unique sequential folder IDs.
+ *   Defaults to zero at deploy.
+ */
 export ledger folderCount: Counter;
 
-// ------------------------
+// ----------------------------------------
 // === Constructor ===
-// ------------------------
+// ----------------------------------------
 
-// No private inputs. We reuse the base contract's ownerKey via cross-contract calls.
 constructor() {
-    // Initialize folderCount; zero-initialized by default.
-    folderCount = counter(0);
+    // No explicit initialization needed:
+    // • folderCount auto‐zeroed
+    // • maps start empty
 }
 
-// ------------------------------------------------
-// === Folder Management Circuits (Core Logic) ===
-// ------------------------------------------------
+// ----------------------------------------
+// === Circuit: createFolder() ===
+// ----------------------------------------
 
-// circuit: createFolder
-// - Verifies caller is the wallet owner via a ZK proof against base.ownerKey.
-// - Increments folderCount to generate a new unique folderID.
-// - Stores the folder contract address into folderRegistry.
-// - Marks the folder status as Active.
-// - Returns the new folderID.
-circuit createFolder(folderContractAddr: Bytes<32>,
-                     ownerSig: Signature): UInt {
-    // 1) Verify signature: ensures only owner can create folders.
-    assert(valid_signature(base.ownerKey(), ownerSig));
+/*
+ * export circuit createFolder
+ * -----------------------------------------------------------------------
+ * Registers a new folder contract under the wallet:
+ *   1. Verifies owner’s signature over a domain‐tagged message.
+ *   2. Increments folderCount → new folderId.
+ *   3. Stores folder contract address & marks status Active.
+ *   4. Returns the new folderId.
+ *
+ * Params:
+ *   folderContractAddr – Bytes<32> on‐chain address of deployed folder contract
+ *   ownerSignature     – Bytes<64> signature by ownerKey over the msg
+ *
+ * Returns:
+ *   Field – the newly assigned folderId
+ */
+export circuit createFolder(
+    folderContractAddr: Bytes<32>,
+    ownerSignature: Bytes<64>
+): Field {
+    // 1) Domain‐separated message to sign:
+    let msg = persistent_hash<Vector<2, Bytes<32>>>([
+        pad(32, "midnight:protocol:createFolder"),
+        folderContractAddr
+    ]);
 
-    // 2) Generate a new folder ID.
-    let newId = increment(folderCount);
+    // 2) Verify owner’s signature
+    assert verifySignature(base.getOwnerKey(), ownerSignature, msg)
+        "ERR_SIG: invalid createFolder signature";
 
-    // 3) Record the folder contract address and status.
-    folderRegistry.set(newId, folderContractAddr);
-    folderStatus.set(newId, FolderStatus.Active);
+    // 3) Allocate new ID
+    folderCount += 1;
+    let newId = folderCount;
 
-    // 4) Return the assigned ID.
+    // 4) Register in maps
+    folderRegistry[newId] = folderContractAddr;
+    folderStatus[newId]   = FolderStatus.Active;
+
     return newId;
 }
 
-// circuit: archiveFolder
-// - Marks an existing folder as Archived. Only the owner can archive.
-circuit archiveFolder(folderId: UInt, ownerSig: Signature) {
-    assert(valid_signature(base.ownerKey(), ownerSig));
-    assert(folderStatus.get(folderId) == FolderStatus.Active);
-    folderStatus.set(folderId, FolderStatus.Archived);
+// ----------------------------------------
+// === Circuit: archiveFolder() ===
+// ----------------------------------------
+
+/*
+ * export circuit archiveFolder
+ * -----------------------------------------------------------------------
+ * Marks an existing folder as Archived:
+ *   1. Verifies owner’s signature over a domain‐tagged message.
+ *   2. Ensures the folder is currently Active.
+ *   3. Updates status to Archived.
+ *
+ * Params:
+ *   folderId       – Field identifier of the folder to archive
+ *   ownerSignature – Bytes<64> signature by ownerKey over the msg
+ */
+export circuit archiveFolder(
+    folderId: Field,
+    ownerSignature: Bytes<64>
+) {
+    // 1) Reconstruct domain‐tagged message
+    let msg = persistent_hash<Vector<2, Bytes<32>>>([
+        pad(32, "midnight:protocol:archiveFolder"),
+        folderId as Bytes<32>
+    ]);
+
+    // 2) Verify owner’s signature
+    assert verifySignature(base.getOwnerKey(), ownerSignature, msg)
+        "ERR_SIG: invalid archiveFolder signature";
+
+    // 3) Ensure current status is Active
+    assert folderStatus[folderId] == FolderStatus.Active
+        "ERR_STATE: folder must be Active to archive";
+
+    // 4) Archive
+    folderStatus[folderId] = FolderStatus.Archived;
 }
 
-// circuit: getFolderAddress
-// - Reads the stored address for a given folderID.
-circuit getFolderAddress(folderId: UInt): Bytes<32> {
-    return folderRegistry.get(folderId);
+// ----------------------------------------
+// === Circuit: getFolderAddress() ===
+// ----------------------------------------
+
+/*
+ * export circuit getFolderAddress
+ * -----------------------------------------------------------------------
+ * Public read‐only lookup of a folder’s contract address.
+ *
+ * Params:
+ *   folderId – Field identifier of the folder
+ *
+ * Returns:
+ *   Bytes<32> – on‐chain address stored in folderRegistry
+ */
+export circuit getFolderAddress(folderId: Field): Bytes<32> {
+    return folderRegistry[folderId];
 }
 
-// circuit: listFolders
-// - Returns an array of all folderIDs created so far.
-circuit listFolders(): UInt[/* dynamic: read folderCount */] {
-    let count = read(folderCount);
-    let ids: UInt[count];
-    for (i in 0..count-1) {
-        ids[i] = i + 1;  // IDs start at 1
+// ----------------------------------------
+// === Circuit: listFolders() ===
+// ----------------------------------------
+
+/*
+ * export circuit listFolders
+ * -----------------------------------------------------------------------
+ * Returns a dynamic array of all folder IDs [1..folderCount].
+ * Useful for off‐chain indexers or front‐ends to enumerate folders.
+ *
+ * Returns:
+ *   Field[] – a list of active numeric IDs
+ */
+export circuit listFolders(): Field[] {
+    let total = folderCount;
+    let ids: Field[total];
+    for (i in 0..total-1) {
+        ids[i] = (i + 1) as Field;  // IDs start at 1
     }
     return ids;
 }
-

@@ -1,47 +1,130 @@
-// ========================================================
-// File: contracts/02_protocol_wallet/issuer_contract.compact
-// "issuer_contract" manages a registry of trusted issuers that can
-// mint credentials within folders.
-// ========================================================
+```compact
+// File: contracts/02_protocol_wallet/protocol_wallet_issuer_contract.compact
+// Purpose: Manage a registry of trusted issuers for credential minting in MidnightForge’s protocol wallet.
 
 import CompactStandardLibrary;
-import "protocol_wallet.compact";
+// Import base primitives (ownerKey, getOwnerKey) from the protocol_wallet_base contract
+import "../01_protocol_wallet_base/protocol_wallet_base.compact" as base;
 
 // --------------------------------
 // === Ledger State ===
 // --------------------------------
 
-// Maps issuer public key → boolean (trusted or not).
+/*
+ * issuerRegistry:
+ *   A map from an issuer's public key (Bytes<32>) to a Bool indicating trust status.
+ *   true  => trusted issuer allowed to mint credentials
+ *   false => not trusted or revoked
+ */
 export ledger issuerRegistry: Map<Bytes<32>, Bool>;
 
 // ------------------------
 // === Constructor ===
 // ------------------------
 
+/*
+ * Initializes an empty issuer registry.
+ * Only the protocol wallet owner can add or remove issuers via circuits below.
+ */
 constructor() {
-    // No initial issuers; root wallet owner can add later.
+    // No explicit initialization needed; maps default to empty state.
 }
 
-// ------------------------
-// === Issuer Circuits ===
-// ------------------------
+// --------------------------------
+// === Circuit: addIssuer ===
+// --------------------------------
 
-// circuit: addIssuer
-// - Only the protocol wallet owner can register a new trusted issuer.
-circuit addIssuer(issuerKey: Bytes<32>, ownerSig: Signature) {
-    assert(valid_signature(base.ownerKey(), ownerSig));
-    issuerRegistry.set(issuerKey, true);
+/*
+ * export circuit addIssuer
+ * -------------------------------------------------------------
+ * Registers a new trusted issuer public key.
+ * Only callable by the protocol wallet owner.
+ *
+ * Parameters:
+ *   issuerKey      – Bytes<32> public key of the issuer to trust
+ *   ownerSignature – Bytes<64> signature by the owner over the context message
+ */
+export circuit addIssuer(
+    issuerKey: Bytes<32>,
+    ownerSignature: Bytes<64>
+) {
+    // 1) Build a domain-separated message to prevent replay attacks:
+    //    • Tag: "midnight:protocol:issuer"
+    //    • Payload: issuerKey being registered
+    let msg = persistent_hash<Vector<2, Bytes<32>>>([
+        pad(32, "midnight:protocol:issuer"),
+        issuerKey
+    ]);
+
+    // 2) Verify owner's signature over msg using their stored on-chain key
+    assert verifySignature(base.getOwnerKey(), ownerSignature, msg)
+        "ERR_SIG: invalid owner signature";
+
+    // 3) Register the issuer by setting its trust flag to true
+    issuerRegistry[issuerKey] = true;
 }
 
-// circuit: revokeIssuer
-// - Only the protocol wallet owner can remove an issuer.
-circuit revokeIssuer(issuerKey: Bytes<32>, ownerSig: Signature) {
-    assert(valid_signature(base.ownerKey(), ownerSig));
-    issuerRegistry.set(issuerKey, false);
+// --------------------------------
+// === Circuit: revokeIssuer ===
+// --------------------------------
+
+/*
+ * export circuit revokeIssuer
+ * -------------------------------------------------------------
+ * Revokes trust for a previously registered issuer key.
+ * Only callable by the protocol wallet owner.
+ *
+ * Parameters:
+ *   issuerKey      – Bytes<32> public key of the issuer to revoke
+ *   ownerSignature – Bytes<64> signature by the owner over the same context message
+ */
+export circuit revokeIssuer(
+    issuerKey: Bytes<32>,
+    ownerSignature: Bytes<64>
+) {
+    // 1) Reconstruct the same domain-separated message
+    let msg = persistent_hash<Vector<2, Bytes<32>>>([
+        pad(32, "midnight:protocol:issuer"),
+        issuerKey
+    ]);
+
+    // 2) Verify owner’s signature
+    assert verifySignature(base.getOwnerKey(), ownerSignature, msg)
+        "ERR_SIG: invalid owner signature for revoke";
+
+    // 3) Ensure the issuer is currently registered
+    assert issuerRegistry[issuerKey] != none
+        "ERR_NOT_FOUND: issuer not registered";
+
+    // 4) Revoke trust by setting the flag to false
+    issuerRegistry[issuerKey] = false;
 }
 
-// circuit: isTrustedIssuer
-n// Returns true if the given key is in the registry and trusted.
-circuit isTrustedIssuer(pk: Bytes<32>): Bool {
-    return issuerRegistry.get(pk);
+// --------------------------------
+// === Circuit: isTrustedIssuer ===
+// --------------------------------
+
+/*
+ * export circuit isTrustedIssuer
+ * -------------------------------------------------------------
+ * Checks whether a given issuer public key is currently trusted.
+ *
+ * Parameters:
+ *   issuerKey – Bytes<32> public key of the issuer to query
+ *
+ * Returns:
+ *   Bool – true if the key is trusted, false otherwise
+ */
+export circuit isTrustedIssuer(issuerKey: Bytes<32>): Bool {
+    // Retrieve the trust flag; direct access returns 'none' if absent
+    let trusted = issuerRegistry[issuerKey];
+
+    // If not set, treat as untrusted
+    if (trusted == none) {
+        return false;
+    }
+
+    // Otherwise return the stored boolean value
+    return trusted;
 }
+```
