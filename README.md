@@ -28,7 +28,7 @@
 **MidnightForge** is a modular, protocol-level wallet system on Cardano’s Midnight selective-privacy blockchain. It enables:
 
 - 🔒 **Privacy-Preserving DID NFTs** for verifiable credentials
-- 📂 **Folder-Based Smart Contracts** with pluggable logic per folder
+- 📂 **Protocol level wallets with Folder-Based Smart Contracts** with pluggable logic per folder
 - 🤖 **Automated GitHub Bots** and **AI Engines** for education, collaboration, and compensation
 - ⚙️ **Seamless Integration** with Midnight Lace, CLI tools, and front-end SDKs
 
