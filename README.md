@@ -228,7 +228,7 @@ This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for d
 ## 🙏 Acknowledgements
 - **Cardano & Midnight** for the selective-privacy foundation.
 - **My dear friend, Charles Hoskinson** (He doesn't know me) for his extra-ordinary vision and for generally being awesome, showing me another way to be, and his relentless pursuit of the meaning of life.
-- **Eric Romero and EddaLabs** for vision and sponsorship.
+- **Eric Romero and EddaLabs** for his vision and mentorship.
 - **Community contributors** for testing and feedback.
 - **Kapa.ai** and **GPT** for development insights.
 
