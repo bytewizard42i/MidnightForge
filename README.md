@@ -70,43 +70,65 @@ MidnightForge/
 ├── .github/                 # CI workflows & PR templates
 ├── CHANGELOG.md
 ├── CODE_OF_CONDUCT.md
+├── COMPILER_SETUP.md        # Documentation for Compact compiler setup
 ├── CONTRIBUTING.md
+├── DEVELOPMENT.md           # Comprehensive development guide
 ├── LICENSE
 ├── README.md
+├── dev.sh                   # Development helper script
 ├── package.json
+├── source-control-helper.sh # Git repository management script
 ├── tsconfig.json
 ├── vitest.config.ts
 │
 ├── contract/                # Smart-contract code & SDK
-│   └── src/
-│       ├── contracts/
-│       │   ├── 01_protocol_wallet_base/
-│       │   │   └── protocol_wallet_base.compact
-│       │   ├── 02_protocol_wallet/
-│       │   │   ├── protocol_wallet.compact
-│       │   │   ├── folder_contract.compact
-│       │   │   └── issuer_contract.compact
-│       │   └── 03_privacy_did_nft/
-│       │       └── did_nft.compact
-│       ├── index.ts         # JS/TS SDK exports
-│       └── test/            # Vitest suites for each contract
+│   ├── package.json         # Contract-specific dependencies and scripts
+│   ├── .gitignore           # Contract-specific ignored files
+│   ├── src/
+│   │   ├── contracts/
+│   │   │   ├── 01_protocol_wallet_base/
+│   │   │   │   └── protocol_wallet_base.compact  # Core on-chain primitives
+│   │   │   ├── 02_protocol_wallet/
+│   │   │   │   ├── protocol_wallet.compact       # Folder registry management
+│   │   │   │   ├── protocol_wallet_folder_contract.compact  # Per-folder permissions
+│   │   │   │   └── protocol_wallet_issuer_contract.compact  # Trusted issuer registry
+│   │   │   └── 03_DIDz_NFTs/
+│   │   │       └── DIDz_NFT_contract.compact     # ZK-powered DID NFTs
+│   │   ├── counter.compact  # Simple counter example contract
+│   │   ├── minimal.compact  # Minimal example contract
+│   │   ├── test.compact     # Test contract
+│   │   ├── index.ts         # JS/TS SDK exports
+│   │   ├── witnesses.ts     # Private state type definitions
+│   │   ├── managed/         # Generated files (ignored by git)
+│   │   │   ├── counter/     # Compiled counter contract
+│   │   │   ├── minimal/     # Compiled minimal contract
+│   │   │   └── test/        # Compiled test contract
+│   │   └── test/           # Test suite for contracts
+│   │       ├── 01_protocol_wallet_base.test.ts
+│   │       ├── 02_protocol_wallet/
+│   │       │   ├── folder_contract.test.ts
+│   │       │   ├── issuer_contract.test.ts
+│   │       │   └── protocol_wallet.test.ts
+│   │       ├── 03_privacy_did_nft.test.ts
+│   │       ├── counter-simulator.ts
+│   │       ├── counter.test.ts
+│   │       └── mocks/      # Mock implementations for testing
+│   │           ├── compact-runtime.ts
+│   │           ├── midnight-js-network-id.ts
+│   │           └── midnight-js-testing.ts
+│   ├── dist/               # Build output (ignored by git)
+│   └── reports/            # Test reports (ignored by git)
 │
 ├── counter-cli/             # CLI for example counter & protocol testing
+│   ├── package.json
 │   └── src/
-│       └── index.ts
+│       ├── index.ts
+│       └── test/           # CLI tests
 │
-├── bots/                    # GitHub App implementations
-│   ├── assigner/            # Auto-assign issue logic
-│   └── verifier/            # DID proof validation hooks
+├── scripts/                 # Shell helpers
+│   └── deploy.sh
 │
-├── ai-engine/               # AI modules for repo analysis
-│   └── intent.ts            # Intent gleaning & redundancy detection
-│
-├── examples/                # End-to-end deployment & usage scripts
-│   └── basic-demo.ts
-│
-└── scripts/                 # Shell helpers
-    └── deploy.sh
+└── cleanup-branches.sh      # Script to clean up Git branches
 ```
 
 ---
