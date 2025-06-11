@@ -2,7 +2,17 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import crypto from 'crypto';
-import { createTestingEnvironment, TestEnvironment } from '@midnight-ntwrk/midnight-js-testing';
+import { 
+  createTestingEnvironment, 
+  TestEnvironment 
+} from '@midnight-ntwrk/midnight-js-testing';
+import { 
+  NetworkId, 
+  setNetworkId 
+} from '@midnight-ntwrk/midnight-js-network-id';
+
+// Set network ID to Undeployed for testing
+setNetworkId(NetworkId.Undeployed);
 
 describe('01_protocol_wallet_base', () => {
   let env: TestEnvironment;
@@ -10,7 +20,7 @@ describe('01_protocol_wallet_base', () => {
   let sk: Uint8Array;
 
   beforeAll(async () => {
-    // 1. Spin up Midnight’s test environment
+    // 1. Spin up Midnight's test environment
     env = await createTestingEnvironment();
 
     // 2. Generate a random 32-byte secret key for our wallet owner

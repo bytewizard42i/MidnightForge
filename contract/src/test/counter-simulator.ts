@@ -26,14 +26,17 @@ import {
 } from "../managed/counter/contract/index.cjs";
 import { type CounterPrivateState, witnesses } from "../witnesses.js";
 
-// This is over-kill for such a simple contract, but the same pattern can be used to test more
-// complex contracts.
+// This is a simulator for the counter contract that allows testing without deploying to a blockchain
+// The same pattern can be used to test more complex contracts
 export class CounterSimulator {
   readonly contract: Contract<CounterPrivateState>;
   circuitContext: CircuitContext<CounterPrivateState>;
 
   constructor() {
+    // Initialize the contract with the witnesses
     this.contract = new Contract<CounterPrivateState>(witnesses);
+    
+    // Set up the initial state for the contract
     const {
       currentPrivateState,
       currentContractState,
@@ -41,6 +44,8 @@ export class CounterSimulator {
     } = this.contract.initialState(
       constructorContext({ privateCounter: 0 }, "0".repeat(64))
     );
+    
+    // Create the circuit context for executing contract functions
     this.circuitContext = {
       currentPrivateState,
       currentZswapLocalState,
@@ -52,16 +57,19 @@ export class CounterSimulator {
     };
   }
 
+  // Get the current ledger state
   public getLedger(): Ledger {
     return ledger(this.circuitContext.transactionContext.state);
   }
 
+  // Get the current private state
   public getPrivateState(): CounterPrivateState {
     return this.circuitContext.currentPrivateState;
   }
 
+  // Execute the increment circuit and return the updated ledger state
   public increment(): Ledger {
-    // Update the current context to be the result of executing the circuit.
+    // Update the current context to be the result of executing the circuit
     this.circuitContext = this.contract.impureCircuits.increment(
       this.circuitContext
     ).context;

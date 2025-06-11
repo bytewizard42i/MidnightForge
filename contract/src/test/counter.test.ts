@@ -20,6 +20,7 @@ import {
 } from "@midnight-ntwrk/midnight-js-network-id";
 import { describe, it, expect } from "vitest";
 
+// Set network ID to Undeployed for testing
 setNetworkId(NetworkId.Undeployed);
 
 describe("Counter smart contract", () => {
