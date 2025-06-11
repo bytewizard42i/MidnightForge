@@ -1,8 +1,0 @@
-// Minimal test contract
-pragma language_version 0.15;
-
-export ledger value: Field;
-
-export circuit get(): Field {
-  return value;
-}
