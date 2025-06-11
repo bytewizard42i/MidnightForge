@@ -5,7 +5,8 @@
   "type": "module",
   "workspaces": [
     "counter-cli",
-    "contract"
+    "contract",
+    "compact"
   ],
   "devDependencies": {
     "@eslint/js": "^9.26.0",
