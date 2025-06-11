@@ -1,0 +1,25 @@
+# Ignore managed directory - generated files from Compact compiler
+src/managed/
+
+# Ignore dist directory - build output
+dist/
+
+# Ignore reports directory - test reports
+reports/
+
+# Ignore test files we created
+src/test.compact
+src/minimal.compact
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
