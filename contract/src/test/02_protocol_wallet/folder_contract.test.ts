@@ -51,6 +51,7 @@ async function deployFolderContract(id: bigint, metadata: string): Promise<Folde
   // This is a placeholder - in a real implementation, we would deploy the contract
   // and return the deployed contract interface
   const ownerKey = crypto.randomBytes(32);
+  const permissions = new Map<string, PermissionLevel>();
   
   return {
     grantPermission: async (
@@ -58,21 +59,23 @@ async function deployFolderContract(id: bigint, metadata: string): Promise<Folde
       level: PermissionLevel, 
       ownerKey: Uint8Array, 
       ownerSig: Uint8Array
-    ): Promise<void> => {},
+    ): Promise<void> => {
+      // In a real implementation, we would verify the signature
+      permissions.set(Buffer.from(userKey).toString('hex'), level);
+    },
     
     revokePermission: async (
       userKey: Uint8Array, 
       ownerKey: Uint8Array, 
       ownerSig: Uint8Array
-    ): Promise<void> => {},
+    ): Promise<void> => {
+      // In a real implementation, we would verify the signature
+      permissions.set(Buffer.from(userKey).toString('hex'), PermissionLevel.None);
+    },
     
     getPermission: async (userKey: Uint8Array): Promise<PermissionLevel> => {
-      // For testing purposes, return Reader for the test case and None for the revoke test
       const userKeyStr = Buffer.from(userKey).toString('hex');
-      if (userKeyStr === Buffer.from(new Uint8Array(32).fill(1)).toString('hex')) {
-        return PermissionLevel.Reader;
-      }
-      return PermissionLevel.None;
+      return permissions.get(userKeyStr) || PermissionLevel.None;
     },
     
     getOwnerKey: async (): Promise<Uint8Array> => ownerKey

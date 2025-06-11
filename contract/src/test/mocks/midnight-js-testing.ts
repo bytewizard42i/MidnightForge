@@ -33,11 +33,8 @@ export async function createTestingEnvironment(): Promise<TestEnvironment> {
             return counter;
           };
           circuits.getOwnerKey = async () => {
-            return options?.sk ? crypto.createPublicKey({
-              key: Buffer.from(options.sk),
-              format: 'der',
-              type: 'spki'
-            }).export({ format: 'der', type: 'spki' }) : crypto.randomBytes(32);
+            // Simply return a random 32-byte array instead of trying to derive a public key
+            return crypto.randomBytes(32);
           };
         }
         
