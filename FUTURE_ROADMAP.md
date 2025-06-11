@@ -95,6 +95,11 @@ export circuit executeMultiSig(
 ): Bool { ... }
 ```
 
+### **🌐 Node Partitioning System**
+- Implement distributed storage architecture for efficient data management
+- Create partitioning nodes for balanced data distribution across network
+- Develop hashing checksum validation for data integrity verification
+
 ### **⏱️ Time-Based Operations**
 - Add time-locked operations for scheduled transactions
 - Implement expiring permissions for temporary access
@@ -123,6 +128,11 @@ export circuit executeMultiSig(
 - Implement attribute-based disclosure controls
 - Create zero-knowledge proof verification for specific attributes
 - Add user-controlled disclosure policies
+
+### **🌍 Multi-Jurisdictional Compliance**
+- Develop region-specific compliance frameworks using DIDs
+- Create algorithmic policies for different regulatory environments
+- Implement privacy-preserving compliance verification without exposing PII
 
 ---
 
@@ -245,6 +255,23 @@ export circuit executeMultiSig(
 - Create compatibility with Verifiable Credentials specification
 - Build adapters for common identity frameworks
 
+## **Real World Asset (RWA) Tokenization**
+
+### **🏦 Dynamic NFT Framework for RWAs**
+- Develop infrastructure for representing real-world assets as dynamic NFTs
+- Create immutable on-chain storage for asset registration and history
+- Implement privacy-preserving ZKProof verification for asset details
+
+### **🔍 Universal RWA Blockchain Explorer (URBE)**
+- Build standardized interfaces for RWA data querying and visualization
+- Create multi-jurisdictional compliance frameworks through DIDs
+- Implement permission-based access controls for different stakeholder types
+
+### **🏢 Tokenized Blockchain-based Title Registers**
+- Develop specialized circuits for title registration and transfer
+- Create templates for different asset classes (real estate, vehicles, commodities)
+- Implement multi-jurisdictional legal compliance through algorithmic policies
+
 ## **External Service Integration**
 
 ### **🔌 API Gateway**
@@ -320,6 +347,9 @@ export circuit executeMultiSig(
 | 🟠 Medium | Folder hierarchies and templates | Medium | Medium | Q2 2026 |
 | 🟠 Medium | Developer tooling improvements | Medium | High | Q3 2026 |
 | 🟠 Medium | Cross-chain interoperability | High | Medium | Q4 2026 |
+| 🔴 High | RWA Dynamic NFT Framework | High | High | Q1 2026 |
+| 🟠 Medium | Universal RWA Blockchain Explorer | Medium | High | Q2 2026 |
+| 🟠 Medium | Tokenized Blockchain-based Title Registers | High | High | Q3 2026 |
 | 🟢 Low | AI-powered code analysis | Medium | Medium | Q1 2027 |
 | 🟢 Low | Advanced analytics dashboard | Low | Medium | Q2 2027 |
 
