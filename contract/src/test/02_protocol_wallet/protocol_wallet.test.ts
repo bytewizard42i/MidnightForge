@@ -3,7 +3,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { 
   NetworkId, 
   setNetworkId 
-} from '@midnight-ntwrk/midnight-js-network-id';
+} from '../mocks/midnight-js-network-id';
 import crypto from 'crypto';
 
 // Import the contract interface - path will be updated once we have the actual contract

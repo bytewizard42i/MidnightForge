@@ -17,7 +17,7 @@ import { CounterSimulator } from "./counter-simulator.js";
 import {
   NetworkId,
   setNetworkId
-} from "@midnight-ntwrk/midnight-js-network-id";
+} from "./mocks/midnight-js-network-id";
 import { describe, it, expect } from "vitest";
 
 // Set network ID to Undeployed for testing

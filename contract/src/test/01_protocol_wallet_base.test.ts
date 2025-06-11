@@ -5,11 +5,11 @@ import crypto from 'crypto';
 import { 
   createTestingEnvironment, 
   TestEnvironment 
-} from '@midnight-ntwrk/midnight-js-testing';
+} from './mocks/midnight-js-testing';
 import { 
   NetworkId, 
   setNetworkId 
-} from '@midnight-ntwrk/midnight-js-network-id';
+} from './mocks/midnight-js-network-id';
 
 // Set network ID to Undeployed for testing
 setNetworkId(NetworkId.Undeployed);
