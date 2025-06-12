@@ -150,6 +150,8 @@ npm install
 ---
 
 ## ⚡ Build & Compile
+The build process utilizes `run-compactc`, an internal wrapper script that leverages the `CompactC` compiler. Ensure the `CompactC` compiler (v1.x.x) is installed and set the `COMPACT_HOME` environment variable to the directory containing the `compactc` executable.
+
 ```bash
 npm run build:base     # Compile 01_protocol_wallet_base
 npm run build:wallet   # Compile 02_protocol_wallet
