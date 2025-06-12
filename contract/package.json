@@ -18,16 +18,18 @@
   "scripts": {
     "compact:counter": "run-compactc src/contracts/counter.compact src/managed/counter",
     "compact:protocol_wallet_base": "run-compactc src/contracts/01_protocol_wallet_base/protocol_wallet_base.compact src/managed/protocol_wallet_base",
+    "compact:combinedContract": "run-compactc src/contracts/Combined_DIDz_NFT_contract.compact src/managed/combinedContract",
     "test": "vitest run",
     "test:compile": "npm run compact && vitest run",
     "build": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/contracts/counter.compact ./dist",
     "build:protocol_wallet_base": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/contracts/01_protocol_wallet_base/protocol_wallet_base.compact ./dist",
+    "build:combinedContract": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/contracts/Combined_DIDz_NFT_contract.compact ./dist",
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
     "@midnight-ntwrk/compact": "file:../compact",
-    "eslint": "^8.52.0",
+    "eslint": "^9.28.0",
     "jest": "^29.7.0",
     "typescript": "^5.2.2"
   }
