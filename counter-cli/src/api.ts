@@ -38,7 +38,6 @@ import { type Logger } from 'pino';
 import * as Rx from 'rxjs';
 import { WebSocket } from 'ws';
 import {
-  ProtocolWalletBasePrivateStateId,
   type CounterContract,
   type CounterPrivateStateId,
   type CounterProviders,
@@ -54,7 +53,6 @@ import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-util
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import * as fsAsync from 'node:fs/promises';
 import * as fs from 'node:fs';
-import { Hex } from 'viem/_types/types/misc';
 
 let logger: Logger;
 // Instead of setting globalThis.crypto which is read-only, we'll ensure crypto is available
@@ -73,6 +71,38 @@ export const getCounterLedgerState = async (
     .then((contractState) => (contractState != null ? Counter.ledger(contractState.data).round : null));
   logger.info(`Ledger state: ${state}`);
   return state;
+};
+
+export const getCombinedContractOwnerKey = async (
+  providers: CombinedContractProviders,
+  contractAddress: ContractAddress,
+): Promise<string | null> => {
+  assertIsContractAddress(contractAddress);
+  logger.info('Checking contract owner key...');
+  const state = await providers.publicDataProvider
+    .queryContractState(contractAddress)
+    .then((contractState) => (contractState != null ? CombinedContract.ledger(contractState.data).ownerKey : null));
+  logger.info(`getCombinedContractOwnerKey: Owner key: ${state}`);
+
+  // convert state to string
+  const ownerKey = toHex(state as Uint8Array);
+  return ownerKey;
+};
+
+export const getCombinedContractOwnerAddress = async (
+  providers: CombinedContractProviders,
+  contractAddress: ContractAddress,
+): Promise<string | null> => {
+  assertIsContractAddress(contractAddress);
+  logger.info('Checking contract owner address...');
+  const state = await providers.publicDataProvider
+    .queryContractState(contractAddress)
+    .then((contractState) => (contractState != null ? CombinedContract.ledger(contractState.data).ownerAddress : null));
+  logger.info(`getCombinedContractOwnerAddress: Owner address: ${state}`);
+
+  // convert state to string
+  const ownerAddress = state as string;
+  return ownerAddress;
 };
 
 export const counterContractInstance: CounterContract = new Counter.Contract(witnesses);
@@ -110,13 +140,14 @@ export const deployCombinedContract = async (
   providers: CombinedContractProviders,
   privateState: CombinedContractPrivateState,
   ownerSecretKey: Uint8Array,
+  ownerAddress: string,
 ): Promise<DeployedCombinedContractContract> => {
   logger.info('Deploying combined contract...');
   const combinedContract = await deployContract(providers, {
     contract: combinedContractInstance,
     privateStateId: CombinedContractPrivateStateId,
     initialPrivateState: privateState,
-    args: [ownerSecretKey],
+    args: [ownerSecretKey, ownerAddress],
   });
   logger.info(`Deployed contract at address: ${combinedContract.deployTxData.public.contractAddress}`);
   return combinedContract;
@@ -141,6 +172,35 @@ export const displayCounterValue = async (
     logger.info(`Current counter value: ${Number(counterValue)}`);
   }
   return { contractAddress, counterValue };
+};
+
+export const displayCombinedContractOwnerKey = async (
+  providers: CombinedContractProviders,
+  combinedContract: DeployedCombinedContractContract,
+): Promise<{ contractAddress: string; ownerKey: string | null }> => {
+  const contractAddress = combinedContract.deployTxData.public.contractAddress;
+  
+  const ownerKey = await getCombinedContractOwnerKey(providers, contractAddress);
+  if (ownerKey === null) {
+    logger.info(`There is no combined contract deployed at ${contractAddress}.`);
+  } else {
+    logger.info(`Owner key: ${ownerKey}`);
+  }
+  return { contractAddress, ownerKey };
+};
+
+export const displayCombinedContractOwnerAddress = async (
+  providers: CombinedContractProviders,
+  combinedContract: DeployedCombinedContractContract,
+): Promise<{ contractAddress: string; ownerAddress: string | null }> => {
+  const contractAddress = combinedContract.deployTxData.public.contractAddress;
+  const ownerAddress = await getCombinedContractOwnerAddress(providers, contractAddress);
+  if (ownerAddress === null) {
+    logger.info(`There is no combined contract deployed at ${contractAddress}.`);
+  } else {
+    logger.info(`Owner address: ${ownerAddress}`);
+  }
+  return { contractAddress, ownerAddress };
 };
 
 export const createWalletAndMidnightProvider = async (wallet: Wallet): Promise<WalletProvider & MidnightProvider> => {
@@ -348,7 +408,7 @@ export const buildFreshWalletReturnSeed = async (config: Config): Promise<{ wall
   return { wallet, seed };
 };
 
-export const configureProviders = async (wallet: Wallet & Resource, config: Config) => {
+export const configureProviders = async (wallet: Wallet & Resource, config: Config): Promise<CounterProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
     privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
@@ -363,24 +423,7 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
 };
 
 
-export const configureProtocolWalletBaseProviders = async (wallet: Wallet & Resource, config: Config) => {
-  const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
-  return {
-    privateStateProvider: levelPrivateStateProvider<typeof ProtocolWalletBasePrivateStateId>({
-      privateStateStoreName: protocolWalletBaseConfig.privateStateStoreName,
-    }),
-    publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
-    publicKeyZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(protocolWalletBaseConfig.zkConfigPath),
-    getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(protocolWalletBaseConfig.zkConfigPath),
-    walletProvider: walletAndMidnightProvider,
-    midnightProvider: walletAndMidnightProvider,
-    proofProvider: httpClientProofProvider(config.proofServer),
-    zkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
-  };
-};
-
-export const configureCombinedContractProviders = async (wallet: Wallet & Resource, config: Config) => {
+export const configureCombinedContractProviders = async (wallet: Wallet & Resource, config: Config): Promise<CombinedContractProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
     privateStateProvider: levelPrivateStateProvider<typeof CombinedContractPrivateStateId>({
@@ -397,6 +440,7 @@ export const configureCombinedContractProviders = async (wallet: Wallet & Resour
     getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(combinedContractConfig.zkConfigPath),
     incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
     getCounterZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(combinedContractConfig.zkConfigPath),
+    getOwnerAddressZkConfigProvider: new NodeZkConfigProvider<'getOwnerAddress'>(combinedContractConfig.zkConfigPath),
   };
 };
 

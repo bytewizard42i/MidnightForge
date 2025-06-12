@@ -46,11 +46,17 @@ export ledger ownerKey: Bytes<32>;
 //   • Auto-initialized to zero by Compact; no explicit reset needed.
 export ledger globalCounter: Counter;
 
+// `ownerAddress`
+//   The public key of the wallet owner. shielded public address
+//   Used by other circuits to verify that only the owner can perform
+//   privileged operations (minting DIDz NFTs, etc.).
+export ledger ownerAddress: Opaque<"string">;
+
 // ------------------------
 // === Constructor ===
 // ------------------------
 
-constructor(sk: Bytes<32>) {
+constructor(sk: Bytes<32>, _ownerAddress: Opaque<"string">) {
     /*
      * At deployment:
      * 1. `globalCounter` is at its default value (0).
@@ -59,6 +65,7 @@ constructor(sk: Bytes<32>) {
      * 3. This binds the on-chain ownerKey to the deployer's secret.
      */
     ownerKey = public_key(globalCounter, sk);
+    ownerAddress = _ownerAddress;
 
     // Note: We do not manually set `globalCounter` here because
     // Compact counters default to zero automatically.
@@ -224,3 +231,15 @@ export circuit incrementCounter(): Field {
 export circuit getCounter(): Field {
     return globalCounter.read() as Field; // Use read() for counter value
 } 
+
+/*
+ * export circuit: getOwnerAddress
+ * ----------------------------
+ * Exposes the stored owner's shielded public address for off-chain clients.
+ * Clients can use this value to verify that only the owner can perform
+ * privileged operations (minting DIDz NFTs, etc.).
+ * TODO: This is a temporary solution to expose the owner address.  Migrate to private state in the future.
+ */
+export circuit getOwnerAddress(): Opaque<"string"> {
+    return ownerAddress;
+}

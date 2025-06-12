@@ -7,12 +7,13 @@ import { currentDir } from '../config';
 import { createLogger } from '../logger-utils';
 import { TestEnvironment } from './commons';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { fromHex, Hex } from 'viem';
+import { fromHex } from 'viem';
+import * as Rx from 'rxjs';
 
 const logDir = path.resolve(currentDir, '..', 'logs', 'tests', `${new Date().toISOString()}.log`);
 const logger = await createLogger(logDir);
 
-describe('Protocol Wallet Base', () => {
+describe('Combined DIDz Wallet', () => {
   let testEnvironment: TestEnvironment;
   let wallet: Wallet & Resource;
   let providers: CombinedContractProviders;
@@ -38,10 +39,22 @@ describe('Protocol Wallet Base', () => {
   });
 
   it('should deploy the contract and check is not null', async () => {
-    // convert ownerSeed to bytes
+    const state = await Rx.firstValueFrom(wallet.state());
+    const ownerAddress = state.address;
     const ownerSecretKey = fromHex(`0x${ownerSeed}`, { to: 'bytes' });
-
-    const combinedContract = await api.deployCombinedContract(providers, { privateValue: 0 }, ownerSecretKey);
+    const combinedContract = await api.deployCombinedContract(providers, { privateValue: 0 }, ownerSecretKey, ownerAddress);
     expect(combinedContract).not.toBeNull();
+
+    // Get the owner address from the contract
+    const { ownerAddress: ownerAddressFromContract, contractAddress } = await api.displayCombinedContractOwnerAddress(providers, combinedContract);
+    logger.info(`Owner address from contract: ${ownerAddressFromContract}`);
+    logger.info(`Contract address: ${contractAddress}`);
+
+    expect(ownerAddressFromContract).not.toBeNull();
+    expect(ownerAddressFromContract).toEqual(ownerAddress);
+  });
+
+  it('should mint a DIDz NFT', async () => {
+
   });
 });
