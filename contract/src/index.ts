@@ -15,4 +15,5 @@
 
 export * as Counter from "./managed/counter/contract/index.cjs";
 export * as ProtocolWalletBase from "./managed/protocol_wallet_base/contract/index.cjs";
+export * as CombinedContract from "./managed/combinedContract/contract/index.cjs";
 export * from "./witnesses";

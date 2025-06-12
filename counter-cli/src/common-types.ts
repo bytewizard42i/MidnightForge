@@ -14,7 +14,8 @@
 // limitations under the License.
 
 import { Counter, type CounterPrivateState } from '@midnight-ntwrk/counter-contract';
-import { ProtocolWalletBase, type ProtocolWalletBasePrivateState } from '@midnight-forge/protocol-did-contract';
+import { ProtocolWalletBase, type ProtocolWalletBasePrivateState, CombinedContract, type CombinedContractPrivateState } from '@midnight-forge/protocol-did-contract';
+
 import type { ImpureCircuitId, MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
 
@@ -42,3 +43,18 @@ export type ProtocolWalletBaseProviders = MidnightProviders<ProtocolWalletBaseCi
 export type ProtocolWalletBaseContract = ProtocolWalletBase.Contract<ProtocolWalletBasePrivateState>;
 
 export type DeployedProtocolWalletBaseContract = DeployedContract<ProtocolWalletBaseContract> | FoundContract<ProtocolWalletBaseContract>;
+
+
+/**
+ * Combined Contract
+ */
+
+export type CombinedContractCircuits = ImpureCircuitId<CombinedContract.Contract<CombinedContractPrivateState>>;
+
+export const CombinedContractPrivateStateId = 'combinedContractPrivateState';
+
+export type CombinedContractProviders = MidnightProviders<CombinedContractCircuits, typeof CombinedContractPrivateStateId, CombinedContractPrivateState>;
+
+export type CombinedContractContract = CombinedContract.Contract<CombinedContractPrivateState>;
+
+export type DeployedCombinedContractContract = DeployedContract<CombinedContractContract> | FoundContract<CombinedContractContract>;

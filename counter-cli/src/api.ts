@@ -43,8 +43,9 @@ import {
   type CounterPrivateStateId,
   type CounterProviders,
   type DeployedCounterContract,
+  CombinedContractPrivateStateId,
 } from './common-types';
-import { type Config, contractConfig, protocolWalletBaseConfig } from './config';
+import { combinedContractConfig, type Config, contractConfig, protocolWalletBaseConfig } from './config';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
@@ -349,6 +350,26 @@ export const configureProtocolWalletBaseProviders = async (wallet: Wallet & Reso
     midnightProvider: walletAndMidnightProvider,
     proofProvider: httpClientProofProvider(config.proofServer),
     zkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
+  };
+};
+
+export const configureCombinedContractProviders = async (wallet: Wallet & Resource, config: Config) => {
+  const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
+  return {
+    privateStateProvider: levelPrivateStateProvider<typeof CombinedContractPrivateStateId>({
+      privateStateStoreName: combinedContractConfig.privateStateStoreName,
+    }),
+    publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
+    zkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
+    walletProvider: walletAndMidnightProvider,
+    midnightProvider: walletAndMidnightProvider,
+    proofProvider: httpClientProofProvider(config.proofServer),
+    mintDIDzNFTZkConfigProvider: new NodeZkConfigProvider<'mintDIDzNFT'>(combinedContractConfig.zkConfigPath),
+    getDIDzNFTOwnerZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTOwner'>(combinedContractConfig.zkConfigPath),
+    getDIDzNFTMetadataHashZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(combinedContractConfig.zkConfigPath),
+    getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(combinedContractConfig.zkConfigPath),
+    incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
+    getCounterZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(combinedContractConfig.zkConfigPath),
   };
 };
 

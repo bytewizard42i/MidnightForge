@@ -27,6 +27,11 @@ export const protocolWalletBaseConfig = {
   zkConfigPath: path.resolve(currentDir, '..', '..', 'contract', 'src', 'managed', 'protocol_wallet_base'),
 };
 
+export const combinedContractConfig = {
+  privateStateStoreName: 'combinedContractPrivateState',
+  zkConfigPath: path.resolve(currentDir, '..', '..', 'contract', 'src', 'managed', 'combinedContract'),
+};
+
 export interface Config {
   readonly logDir: string;
   readonly indexer: string;
