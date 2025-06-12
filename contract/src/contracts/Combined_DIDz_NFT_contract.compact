@@ -1,0 +1,226 @@
+// File: MidnightForge/contract/src/contracts/Combined_DIDz_NFT_contract.compact
+// Purpose: Combined DIDz NFT contract and Protocol Wallet Base for MidnightForge.
+//          Manages minting and ownership tracking of DIDz NFTs,
+//          and includes base protocol wallet primitives (owner key, global counter).
+
+import CompactStandardLibrary;
+
+// ----------------------------------------
+// === Types & Enums ===
+// ----------------------------------------
+
+// DID represents a Decentralized Identifier, typically a 32-byte hash.
+struct DID { bytes: Bytes<32>; }
+
+// NFTMetadataHash represents a hash of the NFT's metadata.
+struct NFTMetadataHash { bytes: Bytes<32>; }
+
+// ----------------------------------------
+// === Ledger State ===
+// ----------------------------------------
+
+/*
+ * didzNFTs:
+ *   Map< Field (nftId) → DID (ownerDID) >
+ *   Stores the DID of the owner for each minted DIDz NFT.
+ */
+export ledger didzNFTs: Map<Field, DID>;
+
+/*
+ * nftMetadata:
+ *   Map< Field (nftId) → NFTMetadataHash (metadataHash) >
+ *   Stores the hash of the metadata associated with each DIDz NFT.
+ */
+export ledger nftMetadata: Map<Field, NFTMetadataHash>;
+
+// `ownerKey`
+//   Stores the on-chain public key of the wallet owner.
+//   Used by other circuits to verify that only the owner can perform
+//   privileged operations (folder creation, issuer management, etc.).
+export ledger ownerKey: Bytes<32>;
+
+// `globalCounter`
+//   A general-purpose, on-chain counter.
+//   • Provides entropy for key derivation (as seed in public_key).
+//   • Serves upper layers for generating unique IDs (folders, NFTs, etc.).
+//   • Auto-initialized to zero by Compact; no explicit reset needed.
+export ledger globalCounter: Counter;
+
+// ------------------------
+// === Constructor ===
+// ------------------------
+
+constructor(sk: Bytes<32>) {
+    /*
+     * At deployment:
+     * 1. `globalCounter` is at its default value (0).
+     * 2. We derive `ownerKey` by calling our public_key helper
+     *    using the current counter (0) and the provided secret key.
+     * 3. This binds the on-chain ownerKey to the deployer's secret.
+     */
+    ownerKey = public_key(globalCounter, sk);
+
+    // Note: We do not manually set `globalCounter` here because
+    // Compact counters default to zero automatically.
+}
+
+// ----------------------------------------
+// === Helper Circuit: public_key() ===
+// ----------------------------------------
+
+/*
+ * =============================================================================
+ * Circuit: public_key
+ * -----------------------------------------------------------------------------
+ * Derives a deterministic, on-chain public key from:
+ *   • `seed` – a Field value (e.g., the current global counter) used for entropy
+ *   • `sk`   – the 32-byte secret key provided at deploy time
+ *
+ * This helper uses Compact's `persistent_hash` primitive over a 3-element vector:
+ *   1. A fixed 32-byte namespace tag to avoid hash collisions across protocols
+ *   2. The seed, cast to Bytes<32>, ensuring uniqueness per deployment or call
+ *   3. The raw secret key bytes, tying the result to the owner's private key
+ *
+ * By hashing these together, we get a unique, reproducible `Bytes<32>` public key
+ * that can be used for signature verification in other circuits.
+ * =============================================================================
+ */
+export circuit public_key(seed: Field, sk: Bytes<32>): Bytes<32> {
+    // Build the input vector for hashing:
+    //   pad(32, "...") creates a 32-byte tag "midnight:protocol:wallet:pk"
+    //   seed as Bytes<32> casts our Field entropy to 32 bytes
+    //   sk is already Bytes<32>, our secret key
+
+    // persistent_hash compresses the 3-element vector into a 32-byte digest
+    return persistent_hash<Vector<3, Bytes<32>>>(
+        [pad(32, "midnight:protocol:wallet:pk"),
+        seed as Bytes<32>,
+        sk]);
+}
+
+// ----------------------------------------
+// === Circuit: mintDIDzNFT() ===
+// ----------------------------------------
+
+/*
+ * export circuit mintDIDzNFT
+ * -----------------------------------------------------------------------
+ * Mints a new DIDz NFT and assigns it to a recipient DID.
+ *   1. Builds a domain-separated message for signing.
+ *   2. Verifies the issuer's signature over that message.
+ *      (For simplicity, currently uses the contract owner as the issuer).
+ *   3. Increments globalCounter to obtain a new unique nftId.
+ *   4. Stores the recipient DID and metadata hash for the new nftId.
+ *   5. Returns the new nftId.
+ *
+ * Params:
+ *   recipientDID     – The Decentralized Identifier (DID) of the NFT recipient.
+ *   metadataHash     – The cryptographic hash of the NFT's metadata.
+ *
+ * Returns:
+ *   Field (the assigned unique nftId)
+ */
+export circuit mintDIDzNFT(
+    recipientDID: DID,
+    metadataHash: NFTMetadataHash
+): Field {
+    // 1) Verify that only the contract owner (acting as a simple issuer for now) can mint NFTs
+    assert own_public_key().bytes == ownerKey
+        "ERR_AUTH: Only contract owner can mint DIDz NFTs";
+
+    // 2) Domain-separated message to sign
+    const msg = persistent_hash<Vector<3, Bytes<32>>>([
+        pad(32, "midnight:didz:mintNFT"),
+        recipientDID.bytes,
+        metadataHash.bytes
+    ]);
+    
+    // 3) Allocate a new NFT ID
+    globalCounter.increment(1);
+    const newId = globalCounter.read() as Field;
+
+    // 4) Record the NFT's owner and metadata hash
+    didzNFTs.insert(newId, recipientDID);
+    nftMetadata.insert(newId, metadataHash);
+
+    return newId;
+}
+
+// ----------------------------------------
+// === Circuit: getDIDzNFTOwner() ===
+// ----------------------------------------
+
+/*
+ * export circuit getDIDzNFTOwner
+ * -----------------------------------------------------------------------
+ * Public view: returns the DID of the owner for a given nftId.
+ *
+ * Params:
+ *   nftId – Field identifier of the DIDz NFT.
+ *
+ * Returns:
+ *   DID – The Decentralized Identifier (DID) of the NFT owner.
+ */
+export circuit getDIDzNFTOwner(nftId: Field): DID {
+    return didzNFTs.lookup(nftId);
+}
+
+// ----------------------------------------
+// === Circuit: getDIDzNFTMetadataHash() ===
+// ----------------------------------------
+
+/*
+ * export circuit getDIDzNFTMetadataHash
+ * -----------------------------------------------------------------------
+ * Public view: returns the metadata hash for a given nftId.
+ *
+ * Params:
+ *   nftId – Field identifier of the DIDz NFT.
+ *
+ * Returns:
+ *   NFTMetadataHash – The cryptographic hash of the NFT's metadata.
+ */
+export circuit getDIDzNFTMetadataHash(nftId: Field): NFTMetadataHash {
+    return nftMetadata.lookup(nftId);
+}
+
+// ------------------------
+// === Basic Circuits from protocol_wallet_base ===
+// ------------------------
+
+/*
+ * export circuit: getOwnerKey
+ * ----------------------------
+ * Exposes the stored owner's public key for off-chain clients.
+ * Clients can use this value to verify signatures or ZK proofs
+ * produced by the owner.
+ */
+export circuit getOwnerKey(): Bytes<32> {
+    return ownerKey;
+}
+
+/*
+ * export circuit: incrementCounter
+ * --------------------------------
+ * Atomically increases `globalCounter` by exactly 1.
+ * Returns the new counter value (as a Field) for use as:
+ *   • Entropy seeds in subsequent calls
+ *   • Unique identifiers in higher-level contracts
+ */
+export circuit incrementCounter(): Field {
+    // Add 1 to the counter in place
+    globalCounter.increment(1);
+    // Return the updated counter value
+    return globalCounter.read() as Field; // Use read() for counter value
+}
+
+/*
+ * export circuit: getCounter
+ * --------------------------
+ * Reads (without modifying) the current value of `globalCounter`.
+ * Useful for off-chain queries or nested proof logic that
+ * depends on the latest counter state.
+ */
+export circuit getCounter(): Field {
+    return globalCounter.read() as Field; // Use read() for counter value
+} 

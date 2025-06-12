@@ -16,7 +16,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { Counter, type CounterPrivateState, witnesses } from '@midnight-ntwrk/counter-contract';
+import { CombinedContract, CombinedContractPrivateState, Counter, type CounterPrivateState, witnesses } from '@midnight-forge/protocol-did-contract';
 import { type CoinInfo, nativeToken, Transaction, type TransactionId } from '@midnight-ntwrk/ledger';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
@@ -38,17 +38,23 @@ import { type Logger } from 'pino';
 import * as Rx from 'rxjs';
 import { WebSocket } from 'ws';
 import {
+  ProtocolWalletBasePrivateStateId,
   type CounterContract,
   type CounterPrivateStateId,
   type CounterProviders,
   type DeployedCounterContract,
+  CombinedContractPrivateStateId,
+  DeployedCombinedContractContract,
+  CombinedContractProviders,
+  CombinedContractContract,
 } from './common-types';
-import { type Config, contractConfig } from './config';
+import { combinedContractConfig, type Config, contractConfig, protocolWalletBaseConfig } from './config';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import * as fsAsync from 'node:fs/promises';
 import * as fs from 'node:fs';
+import { Hex } from 'viem/_types/types/misc';
 
 let logger: Logger;
 // Instead of setting globalThis.crypto which is read-only, we'll ensure crypto is available
@@ -70,6 +76,7 @@ export const getCounterLedgerState = async (
 };
 
 export const counterContractInstance: CounterContract = new Counter.Contract(witnesses);
+export const combinedContractInstance: CombinedContractContract = new CombinedContract.Contract(witnesses);
 
 export const joinContract = async (
   providers: CounterProviders,
@@ -97,6 +104,22 @@ export const deploy = async (
   });
   logger.info(`Deployed contract at address: ${counterContract.deployTxData.public.contractAddress}`);
   return counterContract;
+};
+
+export const deployCombinedContract = async (
+  providers: CombinedContractProviders,
+  privateState: CombinedContractPrivateState,
+  ownerSecretKey: Uint8Array,
+): Promise<DeployedCombinedContractContract> => {
+  logger.info('Deploying combined contract...');
+  const combinedContract = await deployContract(providers, {
+    contract: combinedContractInstance,
+    privateStateId: CombinedContractPrivateStateId,
+    initialPrivateState: privateState,
+    args: [ownerSecretKey],
+  });
+  logger.info(`Deployed contract at address: ${combinedContract.deployTxData.public.contractAddress}`);
+  return combinedContract;
 };
 
 export const increment = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
@@ -319,6 +342,12 @@ export const randomBytes = (length: number): Uint8Array => {
 export const buildFreshWallet = async (config: Config): Promise<Wallet & Resource> =>
   await buildWalletAndWaitForFunds(config, toHex(randomBytes(32)), '');
 
+export const buildFreshWalletReturnSeed = async (config: Config): Promise<{ wallet: Wallet & Resource, seed: string }> => {
+  const seed = toHex(randomBytes(32));
+  const wallet = await buildWalletAndWaitForFunds(config, seed, '');
+  return { wallet, seed };
+};
+
 export const configureProviders = async (wallet: Wallet & Resource, config: Config) => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
@@ -330,6 +359,44 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,
+  };
+};
+
+
+export const configureProtocolWalletBaseProviders = async (wallet: Wallet & Resource, config: Config) => {
+  const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
+  return {
+    privateStateProvider: levelPrivateStateProvider<typeof ProtocolWalletBasePrivateStateId>({
+      privateStateStoreName: protocolWalletBaseConfig.privateStateStoreName,
+    }),
+    publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
+    incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
+    publicKeyZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(protocolWalletBaseConfig.zkConfigPath),
+    getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(protocolWalletBaseConfig.zkConfigPath),
+    walletProvider: walletAndMidnightProvider,
+    midnightProvider: walletAndMidnightProvider,
+    proofProvider: httpClientProofProvider(config.proofServer),
+    zkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
+  };
+};
+
+export const configureCombinedContractProviders = async (wallet: Wallet & Resource, config: Config) => {
+  const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
+  return {
+    privateStateProvider: levelPrivateStateProvider<typeof CombinedContractPrivateStateId>({
+      privateStateStoreName: combinedContractConfig.privateStateStoreName,
+    }),
+    publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
+    zkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
+    walletProvider: walletAndMidnightProvider,
+    midnightProvider: walletAndMidnightProvider,
+    proofProvider: httpClientProofProvider(config.proofServer),
+    mintDIDzNFTZkConfigProvider: new NodeZkConfigProvider<'mintDIDzNFT'>(combinedContractConfig.zkConfigPath),
+    getDIDzNFTOwnerZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTOwner'>(combinedContractConfig.zkConfigPath),
+    getDIDzNFTMetadataHashZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(combinedContractConfig.zkConfigPath),
+    getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(combinedContractConfig.zkConfigPath),
+    incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
+    getCounterZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(combinedContractConfig.zkConfigPath),
   };
 };
 
