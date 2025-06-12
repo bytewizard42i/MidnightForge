@@ -124,14 +124,16 @@ export circuit mintDIDzNFT(
     recipientDID: DID,
     metadataHash: NFTMetadataHash
 ): Field {
-    // 1) Domain-separated message to sign
+    // 1) Verify that only the contract owner (acting as a simple issuer for now) can mint NFTs
+    assert own_public_key().bytes == ownerKey
+        "ERR_AUTH: Only contract owner can mint DIDz NFTs";
+
+    // 2) Domain-separated message to sign
     const msg = persistent_hash<Vector<3, Bytes<32>>>([
         pad(32, "midnight:didz:mintNFT"),
         recipientDID.bytes,
         metadataHash.bytes
     ]);
-
-    // 2) Verify that only the contract owner (acting as a simple issuer for now) can mint NFTs
     
     // 3) Allocate a new NFT ID
     globalCounter.increment(1);

@@ -1,4 +1,3 @@
-
 import { type Resource } from '@midnight-ntwrk/wallet';
 import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import path from 'path';
@@ -8,6 +7,7 @@ import { currentDir } from '../config';
 import { createLogger } from '../logger-utils';
 import { TestEnvironment } from './commons';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { fromHex, Hex } from 'viem';
 
 const logDir = path.resolve(currentDir, '..', 'logs', 'tests', `${new Date().toISOString()}.log`);
 const logger = await createLogger(logDir);
@@ -16,13 +16,17 @@ describe('Protocol Wallet Base', () => {
   let testEnvironment: TestEnvironment;
   let wallet: Wallet & Resource;
   let providers: CombinedContractProviders;
+  let ownerSeed: string;    
 
   beforeAll(
     async () => {
       api.setLogger(logger);
       testEnvironment = new TestEnvironment(logger);
       const testConfiguration = await testEnvironment.start();
-      wallet = await testEnvironment.getWallet();
+      wallet = await testEnvironment.getWallet();   
+      ownerSeed = testConfiguration.seed;
+
+      logger.info(`Owner seed: ${ownerSeed}`);
       providers = await api.configureCombinedContractProviders(wallet, testConfiguration.dappConfig);
     },
     1000 * 60 * 45,
@@ -34,19 +38,10 @@ describe('Protocol Wallet Base', () => {
   });
 
   it('should deploy the contract and check is not null', async () => {
-    // const combinedContract = await api.deploy(providers, { privateValue: 0 });
-    // expect(combinedContract).not.toBeNull();
+    // convert ownerSeed to bytes
+    const ownerSecretKey = fromHex(`0x${ownerSeed}`, { to: 'bytes' });
 
-    // const counter = await api.displayCounterValue(providers, counterContract);
-    // expect(counter.counterValue).toEqual(BigInt(0));
-
-    // await new Promise((resolve) => setTimeout(resolve, 2000));
-    // const response = await api.increment(counterContract);
-    // expect(response.txHash).toMatch(/[0-9a-f]{64}/);
-    // expect(response.blockHeight).toBeGreaterThan(BigInt(0));
-
-    // const counterAfter = await api.displayCounterValue(providers, counterContract);
-    // expect(counterAfter.counterValue).toEqual(BigInt(1));
-    // expect(counterAfter.contractAddress).toEqual(counter.contractAddress);
+    const combinedContract = await api.deployCombinedContract(providers, { privateValue: 0 }, ownerSecretKey);
+    expect(combinedContract).not.toBeNull();
   });
 });
