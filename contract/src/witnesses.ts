@@ -18,4 +18,8 @@ export type CounterPrivateState = {
   privateCounter: number;
 };
 
+export type ProtocolWalletBasePrivateState = {
+  privateValue: number;
+};
+
 export const witnesses = {};

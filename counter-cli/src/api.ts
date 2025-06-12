@@ -16,7 +16,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { Counter, type CounterPrivateState, witnesses } from '@midnight-ntwrk/counter-contract';
+import { Counter, type CounterPrivateState, witnesses } from '@midnight-forge/protocol-did-contract';
 import { type CoinInfo, nativeToken, Transaction, type TransactionId } from '@midnight-ntwrk/ledger';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
@@ -38,12 +38,13 @@ import { type Logger } from 'pino';
 import * as Rx from 'rxjs';
 import { WebSocket } from 'ws';
 import {
+  ProtocolWalletBasePrivateStateId,
   type CounterContract,
   type CounterPrivateStateId,
   type CounterProviders,
   type DeployedCounterContract,
 } from './common-types';
-import { type Config, contractConfig } from './config';
+import { type Config, contractConfig, protocolWalletBaseConfig } from './config';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
@@ -330,6 +331,24 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,
+  };
+};
+
+
+export const configureProtocolWalletBaseProviders = async (wallet: Wallet & Resource, config: Config) => {
+  const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
+  return {
+    privateStateProvider: levelPrivateStateProvider<typeof ProtocolWalletBasePrivateStateId>({
+      privateStateStoreName: protocolWalletBaseConfig.privateStateStoreName,
+    }),
+    publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
+    incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
+    publicKeyZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(protocolWalletBaseConfig.zkConfigPath),
+    getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(protocolWalletBaseConfig.zkConfigPath),
+    walletProvider: walletAndMidnightProvider,
+    midnightProvider: walletAndMidnightProvider,
+    proofProvider: httpClientProofProvider(config.proofServer),
+    zkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
   };
 };
 
