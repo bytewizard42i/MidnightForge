@@ -14,4 +14,5 @@
 // limitations under the License.
 
 export * as Counter from "./managed/counter/contract/index.cjs";
+export * as ProtocolWalletBase from "./managed/protocol_wallet_base/contract/index.cjs";
 export * from "./witnesses";
