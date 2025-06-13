@@ -63,6 +63,7 @@ export type CombinedContractProviders = MidnightProviders<CombinedContractCircui
     getCounterZkConfigProvider: NodeZkConfigProvider<'getCounter'>;
     getOwnerAddressZkConfigProvider: NodeZkConfigProvider<'getOwnerAddress'>;
     zkConfigProvider: NodeZkConfigProvider<'incrementCounter'>;
+    getDIDzNFTFromIdZkConfigProvider: NodeZkConfigProvider<'getDIDzNFTFromId'>;
   };
 
 export type CombinedContractContract = CombinedContract.Contract<CombinedContractPrivateState>;

@@ -189,6 +189,25 @@ export const mintDIDzNFT = async (
   return finalizedTxData.public;
 };
 
+export const getDIDzNFT = async (
+  combinedContract: DeployedCombinedContractContract,
+  nftId: number,
+) => {
+  logger.info(`Getting DIDz NFT for nftId: ${nftId}...`);
+  const finalizedTxData = await combinedContract.callTx.getDIDzNFTFromId(BigInt(nftId));
+  const nftResult = finalizedTxData.private.result;
+
+  // Decode Uint8Array fields to hexadecimal strings for readability
+  const nft = {
+    ownerAddress: nftResult.ownerAddress,
+    metadataHash: nftResult.metadataHash,
+    did: nftResult.did,
+  };
+
+  // logger.info(`DIDz NFT: ${JSON.stringify(decodedNft, (key, value) => typeof value === 'bigint' ? value.toString() : value)}`);
+  return nft;
+};
+
 export const displayCounterValue = async (
   providers: CounterProviders,
   counterContract: DeployedCounterContract,
@@ -476,6 +495,7 @@ export const configureCombinedContractProviders = async (
     incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
     getCounterZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(combinedContractConfig.zkConfigPath),
     getOwnerAddressZkConfigProvider: new NodeZkConfigProvider<'getOwnerAddress'>(combinedContractConfig.zkConfigPath),
+    getDIDzNFTFromIdZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTFromId'>(combinedContractConfig.zkConfigPath),
   };
 };
 

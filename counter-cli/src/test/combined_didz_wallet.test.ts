@@ -72,20 +72,18 @@ describe('Combined DIDz Wallet', () => {
     const did = await generateDID(ownerAddress, '1');
     const didBytes = did.bytes;
 
-    logger.info(`Metadata hash: ${metadataHash}`);
-    // logger.info(`DID: ${did.bytes}`);
-    // logger.info(`DID bytes: ${didBytes}`);
+    // logger.info(`Metadata hash: ${metadataHash}`);
 
     // Mint a DIDz NFT
     const didzNFT = await api.mintDIDzNFT(deployedContract, metadataHash, didBytes);
     expect(didzNFT).not.toBeNull();
 
     // Get the DIDz NFT given the DID
-    // const fetchedDIDzNFT = await api.getDIDzNFT(deployedContract, didBytes);
-    // expect(didzNFT).not.toBeNull();
-    // expect(didzNFT.ownerAddress).toEqual(ownerAddress);
-    // expect(didzNFT.metadataHash).toEqual(metadataHash);
-    // expect(didzNFT.did).toEqual(didBytes);
+    const fetchedDIDzNFT = await api.getDIDzNFT(deployedContract, 1);
+    expect(fetchedDIDzNFT).not.toBeNull();
+    expect(fetchedDIDzNFT.ownerAddress).toEqual(ownerAddressBytes);
+    expect(fetchedDIDzNFT.metadataHash).toEqual(metadataHash);
+    expect(fetchedDIDzNFT.did).toEqual(didBytes);
   });
 
   it('should not mint a DIDz NFT if not owner', async () => {

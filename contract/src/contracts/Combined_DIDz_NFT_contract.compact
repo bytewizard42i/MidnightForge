@@ -15,6 +15,13 @@ struct DID { bytes: Bytes<32>; }
 // NFTMetadataHash represents a hash of the NFT's metadata.
 struct NFTMetadataHash { bytes: Bytes<32>; }
 
+// NFT struct represents the data returned for a DIDz NFT
+struct NFT {
+    ownerAddress: Bytes<32>;
+    metadataHash: Bytes<32>;
+    did: Bytes<32>;
+}
+
 // ----------------------------------------
 // === Ledger State ===
 // ----------------------------------------
@@ -32,6 +39,13 @@ export ledger didzNFTs: Map<Field, DID>;
  *   Stores the hash of the metadata associated with each DIDz NFT.
  */
 export ledger nftMetadata: Map<Field, NFTMetadataHash>;
+
+/*
+ * nftToOwnerAddress:
+ *   Map< Field (nftId) → Bytes<32> (ownerAddress) >
+ *   Stores the owner's public address for each DIDz NFT.
+ */
+export ledger nftToOwnerAddress: Map<Field, Bytes<32>>;
 
 // `ownerKey`
 //   Stores the on-chain public key of the wallet owner.
@@ -150,6 +164,9 @@ export circuit mintDIDzNFT(
     didzNFTs.insert(newId, recipientDID);
     nftMetadata.insert(newId, metadataHash);
 
+    // 5) Record the NFT's owner address. which is the owner's public address we will use the coinPublicKeyLegacy
+    nftToOwnerAddress.insert(newId, own_public_key().bytes);
+
     return newId;
 }
 
@@ -243,3 +260,29 @@ export circuit getCounter(): Field {
 export circuit getOwnerAddress(): Bytes<32> {
     return ownerAddress;
 }
+
+export circuit getDIDzNFTFromId(nftId: Field): NFT {
+    assert didzNFTs.member(nftId) "DIDz NFT not found";
+
+    const _did = didzNFTs.lookup(nftId);
+    const _metadataHash = nftMetadata.lookup(nftId);
+    const _ownerAddress = nftToOwnerAddress.lookup(nftId);
+
+    return NFT {
+        ownerAddress: _ownerAddress, // already a Bytes<32>
+        metadataHash: _metadataHash.bytes,
+        did: _did.bytes
+    };
+}
+
+// circuit getDIDzNFTFromDid(did: DID): NFT {
+//     assert didzNFTs.member(did) "DIDz NFT not found";
+
+//     const nftId = didzNFTs.lookup(did);
+//     const ownerAddress = nftToOwnerAddress.lookup(nftId);
+//     return NFT {
+//         ownerAddress: ownerAddress.bytes,
+//         metadataHash: metadataHash.bytes,
+//         did: did.bytes
+//     };
+// }
