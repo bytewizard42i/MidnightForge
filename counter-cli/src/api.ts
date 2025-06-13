@@ -47,7 +47,7 @@ import {
   CombinedContractProviders,
   CombinedContractContract,
 } from './common-types';
-import { combinedContractConfig, type Config, contractConfig, protocolWalletBaseConfig } from './config';
+import { combinedContractConfig, type Config, contractConfig } from './config';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
@@ -92,7 +92,7 @@ export const getCombinedContractOwnerKey = async (
 export const getCombinedContractOwnerAddress = async (
   providers: CombinedContractProviders,
   contractAddress: ContractAddress,
-): Promise<string | null> => {
+): Promise<Uint8Array | null> => {
   assertIsContractAddress(contractAddress);
   logger.info('Checking contract owner address...');
   const state = await providers.publicDataProvider
@@ -100,9 +100,8 @@ export const getCombinedContractOwnerAddress = async (
     .then((contractState) => (contractState != null ? CombinedContract.ledger(contractState.data).ownerAddress : null));
   logger.info(`getCombinedContractOwnerAddress: Owner address: ${state}`);
 
-  // convert state to string
-  const ownerAddress = state as string;
-  return ownerAddress;
+  // Return the raw bytes directly
+  return state;
 };
 
 export const counterContractInstance: CounterContract = new Counter.Contract(witnesses);
@@ -140,7 +139,7 @@ export const deployCombinedContract = async (
   providers: CombinedContractProviders,
   privateState: CombinedContractPrivateState,
   ownerSecretKey: Uint8Array,
-  ownerAddress: string,
+  ownerAddress: Uint8Array,
 ): Promise<DeployedCombinedContractContract> => {
   logger.info('Deploying combined contract...');
   const combinedContract = await deployContract(providers, {
@@ -156,6 +155,17 @@ export const deployCombinedContract = async (
 export const increment = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
   logger.info('Incrementing...');
   const finalizedTxData = await counterContract.callTx.increment();
+  logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
+  return finalizedTxData.public;
+};
+
+export const mintDIDzNFT = async (
+  combinedContract: DeployedCombinedContractContract,
+  metadataHash: Uint8Array,
+  did: Uint8Array,
+): Promise<FinalizedTxData> => {
+  logger.info('Minting DIDz NFT...');
+  const finalizedTxData = await combinedContract.callTx.mintDIDzNFT({ bytes: did }, { bytes: metadataHash });
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
@@ -192,7 +202,7 @@ export const displayCombinedContractOwnerKey = async (
 export const displayCombinedContractOwnerAddress = async (
   providers: CombinedContractProviders,
   combinedContract: DeployedCombinedContractContract,
-): Promise<{ contractAddress: string; ownerAddress: string | null }> => {
+): Promise<{ contractAddress: string; ownerAddress: Uint8Array | null }> => {
   const contractAddress = combinedContract.deployTxData.public.contractAddress;
   const ownerAddress = await getCombinedContractOwnerAddress(providers, contractAddress);
   if (ownerAddress === null) {

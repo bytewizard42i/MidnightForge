@@ -50,13 +50,13 @@ export ledger globalCounter: Counter;
 //   The public key of the wallet owner. shielded public address
 //   Used by other circuits to verify that only the owner can perform
 //   privileged operations (minting DIDz NFTs, etc.).
-export ledger ownerAddress: Opaque<"string">;
+export ledger ownerAddress: Bytes<32>;
 
 // ------------------------
 // === Constructor ===
 // ------------------------
 
-constructor(sk: Bytes<32>, _ownerAddress: Opaque<"string">) {
+constructor(sk: Bytes<32>, _ownerAddress: Bytes<32>) {
     /*
      * At deployment:
      * 1. `globalCounter` is at its default value (0).
@@ -132,7 +132,7 @@ export circuit mintDIDzNFT(
     metadataHash: NFTMetadataHash
 ): Field {
     // 1) Verify that only the contract owner (acting as a simple issuer for now) can mint NFTs
-    assert own_public_key().bytes == ownerKey
+    assert own_public_key().bytes == ownerAddress
         "ERR_AUTH: Only contract owner can mint DIDz NFTs";
 
     // 2) Domain-separated message to sign
@@ -240,6 +240,6 @@ export circuit getCounter(): Field {
  * privileged operations (minting DIDz NFTs, etc.).
  * TODO: This is a temporary solution to expose the owner address.  Migrate to private state in the future.
  */
-export circuit getOwnerAddress(): Opaque<"string"> {
+export circuit getOwnerAddress(): Bytes<32> {
     return ownerAddress;
 }
