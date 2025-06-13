@@ -24,11 +24,13 @@ import {
 import path from 'path';
 import * as api from '../api';
 import * as Rx from 'rxjs';
-import { nativeToken } from '@midnight-ntwrk/ledger';
+import { nativeToken, NetworkId } from '@midnight-ntwrk/ledger';
 import type { Logger } from 'pino';
 import type { Wallet } from '@midnight-ntwrk/wallet-api';
-import type { Resource } from '@midnight-ntwrk/wallet';
+import { WalletBuilder, type Resource } from '@midnight-ntwrk/wallet';
 import { expect } from 'vitest';
+import { randomBytes } from '../api';
+import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 
 const GENESIS_MINT_WALLET_SEED = '0000000000000000000000000000000000000000000000000000000000000001';
 
@@ -192,6 +194,27 @@ export class TestEnvironment {
     const state = await Rx.firstValueFrom(this.wallet.state());
     expect(state.balances[nativeToken()].valueOf()).toBeGreaterThan(BigInt(0));
     return this.wallet;
+  };
+
+  getAnotherRandomWallet = async () => {
+    this.logger.info('Setting up another random wallet');
+    const seed = toHex(randomBytes(32));
+    this.logger.info(`Another random wallet seed: ${seed}`);
+    const anotherWallet = await WalletBuilder.build(
+      this.testConfig.dappConfig.indexer,
+      this.testConfig.dappConfig.indexerWS,
+      this.testConfig.dappConfig.proofServer,
+      this.testConfig.dappConfig.node,
+      seed,
+      NetworkId.TestNet,
+      'info',
+      true,
+    );
+    anotherWallet.start();
+    expect(anotherWallet).not.toBeNull();
+    // const state = await Rx.firstValueFrom(anotherWallet.state());
+    // expect(state.balances[nativeToken()].valueOf()).toBeGreaterThan(BigInt(0));
+    return { wallet: anotherWallet, seed };
   };
 
   saveWalletCache = async () => {

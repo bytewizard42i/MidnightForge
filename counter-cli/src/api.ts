@@ -15,8 +15,14 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CombinedContract, CombinedContractPrivateState, Counter, type CounterPrivateState, witnesses } from '@midnight-forge/protocol-did-contract';
+import { type ContractAddress, StateValue } from '@midnight-ntwrk/compact-runtime';
+import {
+  CombinedContract,
+  CombinedContractPrivateState,
+  Counter,
+  type CounterPrivateState,
+  witnesses,
+} from '@midnight-forge/protocol-did-contract';
 import { type CoinInfo, nativeToken, Transaction, type TransactionId } from '@midnight-ntwrk/ledger';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
@@ -38,7 +44,6 @@ import { type Logger } from 'pino';
 import * as Rx from 'rxjs';
 import { WebSocket } from 'ws';
 import {
-  ProtocolWalletBasePrivateStateId,
   type CounterContract,
   type CounterPrivateStateId,
   type CounterProviders,
@@ -48,19 +53,59 @@ import {
   CombinedContractProviders,
   CombinedContractContract,
 } from './common-types';
-import { combinedContractConfig, type Config, contractConfig, protocolWalletBaseConfig } from './config';
+import { combinedContractConfig, type Config, contractConfig } from './config';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import * as fsAsync from 'node:fs/promises';
 import * as fs from 'node:fs';
-import { Hex } from 'viem/_types/types/misc';
 
 let logger: Logger;
 // Instead of setting globalThis.crypto which is read-only, we'll ensure crypto is available
 // but won't try to overwrite the global property
 // @ts-expect-error: It's needed to enable WebSocket usage through apollo
 globalThis.WebSocket = WebSocket;
+
+export const getContractLedgerState = async <T, K>(
+  providers: CounterProviders | CombinedContractProviders,
+  contractAddress: ContractAddress,
+  contractInstance: { ledger: (data: StateValue) => K },
+  stateMapper: (ledgerState: K) => T | null,
+  logMessage: string,
+): Promise<T | null> => {
+  assertIsContractAddress(contractAddress);
+  logger.info(logMessage);
+  const state = await providers.publicDataProvider
+    .queryContractState(contractAddress)
+    .then((contractState) => (contractState != null ? stateMapper(contractInstance.ledger(contractState.data)) : null));
+  logger.info(`Ledger state: ${state}`);
+  return state;
+};
+
+export const displayGenericContractValue = async <T, K, C extends { deployTxData: { public: { contractAddress: ContractAddress } } }>(
+  providers: CounterProviders | CombinedContractProviders,
+  deployedContract: C,
+  contractInstance: { ledger: (data: StateValue) => K },
+  stateMapper: (ledgerState: K) => T | null,
+  logMessageChecking: string,
+  logMessageFound: (value: T, contractAddress: string) => string,
+  logMessageNotFound: (contractAddress: string) => string,
+): Promise<{ contractAddress: string; value: T | null }> => {
+  const contractAddress = deployedContract.deployTxData.public.contractAddress;
+  const value = await getContractLedgerState(
+    providers,
+    contractAddress,
+    contractInstance,
+    stateMapper,
+    logMessageChecking,
+  );
+  if (value === null) {
+    logger.info(logMessageNotFound(contractAddress));
+  } else {
+    logger.info(logMessageFound(value, contractAddress));
+  }
+  return { contractAddress, value };
+};
 
 export const getCounterLedgerState = async (
   providers: CounterProviders,
@@ -72,6 +117,37 @@ export const getCounterLedgerState = async (
     .queryContractState(contractAddress)
     .then((contractState) => (contractState != null ? Counter.ledger(contractState.data).round : null));
   logger.info(`Ledger state: ${state}`);
+  return state;
+};
+
+export const getCombinedContractOwnerKey = async (
+  providers: CombinedContractProviders,
+  contractAddress: ContractAddress,
+): Promise<string | null> => {
+  assertIsContractAddress(contractAddress);
+  logger.info('Checking contract owner key...');
+  const state = await providers.publicDataProvider
+    .queryContractState(contractAddress)
+    .then((contractState) => (contractState != null ? CombinedContract.ledger(contractState.data).ownerKey : null));
+  logger.info(`getCombinedContractOwnerKey: Owner key: ${state}`);
+
+  // convert state to string
+  const ownerKey = toHex(state as Uint8Array);
+  return ownerKey;
+};
+
+export const getCombinedContractOwnerAddress = async (
+  providers: CombinedContractProviders,
+  contractAddress: ContractAddress,
+): Promise<Uint8Array | null> => {
+  assertIsContractAddress(contractAddress);
+  logger.info('Checking contract owner address...');
+  const state = await providers.publicDataProvider
+    .queryContractState(contractAddress)
+    .then((contractState) => (contractState != null ? CombinedContract.ledger(contractState.data).ownerAddress : null));
+  logger.info(`getCombinedContractOwnerAddress: Owner address: ${state}`);
+
+  // Return the raw bytes directly
   return state;
 };
 
@@ -92,6 +168,19 @@ export const joinContract = async (
   return counterContract;
 };
 
+export const joinCombinedContract = async (
+  providers: CombinedContractProviders,
+  contractAddress: string,
+): Promise<DeployedCombinedContractContract> => {
+  const combinedContract = await findDeployedContract(providers, {
+    contractAddress,
+    contract: combinedContractInstance,
+    privateStateId: CombinedContractPrivateStateId,
+    initialPrivateState: { privateValue: 0 },
+  });
+  return combinedContract;
+};
+
 export const deploy = async (
   providers: CounterProviders,
   privateState: CounterPrivateState,
@@ -110,13 +199,14 @@ export const deployCombinedContract = async (
   providers: CombinedContractProviders,
   privateState: CombinedContractPrivateState,
   ownerSecretKey: Uint8Array,
+  ownerAddress: Uint8Array,
 ): Promise<DeployedCombinedContractContract> => {
   logger.info('Deploying combined contract...');
   const combinedContract = await deployContract(providers, {
     contract: combinedContractInstance,
     privateStateId: CombinedContractPrivateStateId,
     initialPrivateState: privateState,
-    args: [ownerSecretKey],
+    args: [ownerSecretKey, ownerAddress],
   });
   logger.info(`Deployed contract at address: ${combinedContract.deployTxData.public.contractAddress}`);
   return combinedContract;
@@ -129,18 +219,80 @@ export const increment = async (counterContract: DeployedCounterContract): Promi
   return finalizedTxData.public;
 };
 
+export const mintDIDzNFT = async (
+  combinedContract: DeployedCombinedContractContract,
+  metadataHash: Uint8Array,
+  did: Uint8Array,
+): Promise<FinalizedTxData> => {
+  logger.info('Minting DIDz NFT...');
+  const finalizedTxData = await combinedContract.callTx.mintDIDzNFT({ bytes: did }, { bytes: metadataHash });
+  logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
+  return finalizedTxData.public;
+};
+
+export const getDIDzNFT = async (combinedContract: DeployedCombinedContractContract, nftId: number) => {
+  logger.info(`Getting DIDz NFT for nftId: ${nftId}...`);
+  const finalizedTxData = await combinedContract.callTx.getDIDzNFTFromId(BigInt(nftId));
+  const nftResult = finalizedTxData.private.result;
+
+  // Decode Uint8Array fields to hexadecimal strings for readability
+  const nft = {
+    ownerAddress: nftResult.ownerAddress,
+    metadataHash: nftResult.metadataHash,
+    did: nftResult.did,
+  };
+
+  // logger.info(`DIDz NFT: ${JSON.stringify(decodedNft, (key, value) => typeof value === 'bigint' ? value.toString() : value)}`);
+  return nft;
+};
+
 export const displayCounterValue = async (
   providers: CounterProviders,
   counterContract: DeployedCounterContract,
 ): Promise<{ counterValue: bigint | null; contractAddress: string }> => {
-  const contractAddress = counterContract.deployTxData.public.contractAddress;
-  const counterValue = await getCounterLedgerState(providers, contractAddress);
-  if (counterValue === null) {
-    logger.info(`There is no counter contract deployed at ${contractAddress}.`);
-  } else {
-    logger.info(`Current counter value: ${Number(counterValue)}`);
-  }
+  const { contractAddress, value: counterValue } = await displayGenericContractValue(
+    providers,
+    counterContract,
+    { ledger: Counter.ledger },
+    (ledgerState) => ledgerState.round,
+    'Checking counter contract ledger state...',
+    (value) => `Current counter value: ${Number(value)}`,
+    (contractAddress) => `There is no counter contract deployed at ${contractAddress}.`,
+  );
   return { contractAddress, counterValue };
+};
+
+export const displayCombinedContractOwnerKey = async (
+  providers: CombinedContractProviders,
+  combinedContract: DeployedCombinedContractContract,
+): Promise<{ contractAddress: string; ownerKey: string | null }> => {
+  const { contractAddress, value: ownerKeyBytes } = await displayGenericContractValue(
+    providers,
+    combinedContract,
+    { ledger: CombinedContract.ledger },
+    (ledgerState) => ledgerState.ownerKey,
+    'Checking combined contract owner key...',
+    (value, contractAddress) => `Owner key: ${toHex(value as Uint8Array)}`,
+    (contractAddress) => `There is no combined contract deployed at ${contractAddress}.`,
+  );
+  const ownerKey = ownerKeyBytes !== null ? toHex(ownerKeyBytes as Uint8Array) : null;
+  return { contractAddress, ownerKey };
+};
+
+export const displayCombinedContractOwnerAddress = async (
+  providers: CombinedContractProviders,
+  combinedContract: DeployedCombinedContractContract,
+): Promise<{ contractAddress: string; ownerAddress: Uint8Array | null }> => {
+  const { contractAddress, value: ownerAddress } = await displayGenericContractValue(
+    providers,
+    combinedContract,
+    { ledger: CombinedContract.ledger },
+    (ledgerState) => ledgerState.ownerAddress,
+    'Checking combined contract owner address...',
+    (value, contractAddress) => `Owner address: ${value}`,
+    (contractAddress) => `There is no combined contract deployed at ${contractAddress}.`,
+  );
+  return { contractAddress, ownerAddress };
 };
 
 export const createWalletAndMidnightProvider = async (wallet: Wallet): Promise<WalletProvider & MidnightProvider> => {
@@ -342,13 +494,15 @@ export const randomBytes = (length: number): Uint8Array => {
 export const buildFreshWallet = async (config: Config): Promise<Wallet & Resource> =>
   await buildWalletAndWaitForFunds(config, toHex(randomBytes(32)), '');
 
-export const buildFreshWalletReturnSeed = async (config: Config): Promise<{ wallet: Wallet & Resource, seed: string }> => {
+export const buildFreshWalletReturnSeed = async (
+  config: Config,
+): Promise<{ wallet: Wallet & Resource; seed: string }> => {
   const seed = toHex(randomBytes(32));
   const wallet = await buildWalletAndWaitForFunds(config, seed, '');
   return { wallet, seed };
 };
 
-export const configureProviders = async (wallet: Wallet & Resource, config: Config) => {
+export const configureProviders = async (wallet: Wallet & Resource, config: Config): Promise<CounterProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
     privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
@@ -362,25 +516,10 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
   };
 };
 
-
-export const configureProtocolWalletBaseProviders = async (wallet: Wallet & Resource, config: Config) => {
-  const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
-  return {
-    privateStateProvider: levelPrivateStateProvider<typeof ProtocolWalletBasePrivateStateId>({
-      privateStateStoreName: protocolWalletBaseConfig.privateStateStoreName,
-    }),
-    publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
-    publicKeyZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(protocolWalletBaseConfig.zkConfigPath),
-    getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(protocolWalletBaseConfig.zkConfigPath),
-    walletProvider: walletAndMidnightProvider,
-    midnightProvider: walletAndMidnightProvider,
-    proofProvider: httpClientProofProvider(config.proofServer),
-    zkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(protocolWalletBaseConfig.zkConfigPath),
-  };
-};
-
-export const configureCombinedContractProviders = async (wallet: Wallet & Resource, config: Config) => {
+export const configureCombinedContractProviders = async (
+  wallet: Wallet & Resource,
+  config: Config,
+): Promise<CombinedContractProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
     privateStateProvider: levelPrivateStateProvider<typeof CombinedContractPrivateStateId>({
@@ -393,10 +532,14 @@ export const configureCombinedContractProviders = async (wallet: Wallet & Resour
     proofProvider: httpClientProofProvider(config.proofServer),
     mintDIDzNFTZkConfigProvider: new NodeZkConfigProvider<'mintDIDzNFT'>(combinedContractConfig.zkConfigPath),
     getDIDzNFTOwnerZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTOwner'>(combinedContractConfig.zkConfigPath),
-    getDIDzNFTMetadataHashZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(combinedContractConfig.zkConfigPath),
+    getDIDzNFTMetadataHashZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(
+      combinedContractConfig.zkConfigPath,
+    ),
     getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(combinedContractConfig.zkConfigPath),
     incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
     getCounterZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(combinedContractConfig.zkConfigPath),
+    getOwnerAddressZkConfigProvider: new NodeZkConfigProvider<'getOwnerAddress'>(combinedContractConfig.zkConfigPath),
+    getDIDzNFTFromIdZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTFromId'>(combinedContractConfig.zkConfigPath),
   };
 };
 

@@ -18,6 +18,7 @@ import { ProtocolWalletBase, type ProtocolWalletBasePrivateState, CombinedContra
 
 import type { ImpureCircuitId, MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 
 export type CounterCircuits = ImpureCircuitId<Counter.Contract<CounterPrivateState>>;
 
@@ -53,7 +54,17 @@ export type CombinedContractCircuits = ImpureCircuitId<CombinedContract.Contract
 
 export const CombinedContractPrivateStateId = 'combinedContractPrivateState';
 
-export type CombinedContractProviders = MidnightProviders<CombinedContractCircuits, typeof CombinedContractPrivateStateId, CombinedContractPrivateState>;
+export type CombinedContractProviders = MidnightProviders<CombinedContractCircuits, typeof CombinedContractPrivateStateId, CombinedContractPrivateState> & {
+    mintDIDzNFTZkConfigProvider: NodeZkConfigProvider<'mintDIDzNFT'>;
+    getDIDzNFTOwnerZkConfigProvider: NodeZkConfigProvider<'getDIDzNFTOwner'>;
+    getDIDzNFTMetadataHashZkConfigProvider: NodeZkConfigProvider<'getDIDzNFTMetadataHash'>;
+    getOwnerKeyZkConfigProvider: NodeZkConfigProvider<'getOwnerKey'>;
+    incrementCounterZkConfigProvider: NodeZkConfigProvider<'incrementCounter'>;
+    getCounterZkConfigProvider: NodeZkConfigProvider<'getCounter'>;
+    getOwnerAddressZkConfigProvider: NodeZkConfigProvider<'getOwnerAddress'>;
+    zkConfigProvider: NodeZkConfigProvider<'incrementCounter'>;
+    getDIDzNFTFromIdZkConfigProvider: NodeZkConfigProvider<'getDIDzNFTFromId'>;
+  };
 
 export type CombinedContractContract = CombinedContract.Contract<CombinedContractPrivateState>;
 

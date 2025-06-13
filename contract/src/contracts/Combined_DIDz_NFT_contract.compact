@@ -15,6 +15,13 @@ struct DID { bytes: Bytes<32>; }
 // NFTMetadataHash represents a hash of the NFT's metadata.
 struct NFTMetadataHash { bytes: Bytes<32>; }
 
+// NFT struct represents the data returned for a DIDz NFT
+struct NFT {
+    ownerAddress: Bytes<32>;
+    metadataHash: Bytes<32>;
+    did: Bytes<32>;
+}
+
 // ----------------------------------------
 // === Ledger State ===
 // ----------------------------------------
@@ -33,6 +40,13 @@ export ledger didzNFTs: Map<Field, DID>;
  */
 export ledger nftMetadata: Map<Field, NFTMetadataHash>;
 
+/*
+ * nftToOwnerAddress:
+ *   Map< Field (nftId) → Bytes<32> (ownerAddress) >
+ *   Stores the owner's public address for each DIDz NFT.
+ */
+export ledger nftToOwnerAddress: Map<Field, Bytes<32>>;
+
 // `ownerKey`
 //   Stores the on-chain public key of the wallet owner.
 //   Used by other circuits to verify that only the owner can perform
@@ -46,11 +60,17 @@ export ledger ownerKey: Bytes<32>;
 //   • Auto-initialized to zero by Compact; no explicit reset needed.
 export ledger globalCounter: Counter;
 
+// `ownerAddress`
+//   The public key of the wallet owner. shielded public address
+//   Used by other circuits to verify that only the owner can perform
+//   privileged operations (minting DIDz NFTs, etc.).
+export ledger ownerAddress: Bytes<32>;
+
 // ------------------------
 // === Constructor ===
 // ------------------------
 
-constructor(sk: Bytes<32>) {
+constructor(sk: Bytes<32>, _ownerAddress: Bytes<32>) {
     /*
      * At deployment:
      * 1. `globalCounter` is at its default value (0).
@@ -59,6 +79,7 @@ constructor(sk: Bytes<32>) {
      * 3. This binds the on-chain ownerKey to the deployer's secret.
      */
     ownerKey = public_key(globalCounter, sk);
+    ownerAddress = _ownerAddress;
 
     // Note: We do not manually set `globalCounter` here because
     // Compact counters default to zero automatically.
@@ -125,7 +146,7 @@ export circuit mintDIDzNFT(
     metadataHash: NFTMetadataHash
 ): Field {
     // 1) Verify that only the contract owner (acting as a simple issuer for now) can mint NFTs
-    assert own_public_key().bytes == ownerKey
+    assert own_public_key().bytes == ownerAddress
         "ERR_AUTH: Only contract owner can mint DIDz NFTs";
 
     // 2) Domain-separated message to sign
@@ -142,6 +163,9 @@ export circuit mintDIDzNFT(
     // 4) Record the NFT's owner and metadata hash
     didzNFTs.insert(newId, recipientDID);
     nftMetadata.insert(newId, metadataHash);
+
+    // 5) Record the NFT's owner address. which is the owner's public address we will use the coinPublicKeyLegacy
+    nftToOwnerAddress.insert(newId, own_public_key().bytes);
 
     return newId;
 }
@@ -224,3 +248,41 @@ export circuit incrementCounter(): Field {
 export circuit getCounter(): Field {
     return globalCounter.read() as Field; // Use read() for counter value
 } 
+
+/*
+ * export circuit: getOwnerAddress
+ * ----------------------------
+ * Exposes the stored owner's shielded public address for off-chain clients.
+ * Clients can use this value to verify that only the owner can perform
+ * privileged operations (minting DIDz NFTs, etc.).
+ * TODO: This is a temporary solution to expose the owner address.  Migrate to private state in the future.
+ */
+export circuit getOwnerAddress(): Bytes<32> {
+    return ownerAddress;
+}
+
+export circuit getDIDzNFTFromId(nftId: Field): NFT {
+    assert didzNFTs.member(nftId) "DIDz NFT not found";
+
+    const _did = didzNFTs.lookup(nftId);
+    const _metadataHash = nftMetadata.lookup(nftId);
+    const _ownerAddress = nftToOwnerAddress.lookup(nftId);
+
+    return NFT {
+        ownerAddress: _ownerAddress, // already a Bytes<32>
+        metadataHash: _metadataHash.bytes,
+        did: _did.bytes
+    };
+}
+
+// circuit getDIDzNFTFromDid(did: DID): NFT {
+//     assert didzNFTs.member(did) "DIDz NFT not found";
+
+//     const nftId = didzNFTs.lookup(did);
+//     const ownerAddress = nftToOwnerAddress.lookup(nftId);
+//     return NFT {
+//         ownerAddress: ownerAddress.bytes,
+//         metadataHash: metadataHash.bytes,
+//         did: did.bytes
+//     };
+// }
