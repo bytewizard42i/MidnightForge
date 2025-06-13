@@ -16,7 +16,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CombinedContract, CombinedContractPrivateState, Counter, type CounterPrivateState, witnesses } from '@midnight-forge/protocol-did-contract';
+import {
+  CombinedContract,
+  CombinedContractPrivateState,
+  Counter,
+  type CounterPrivateState,
+  witnesses,
+} from '@midnight-forge/protocol-did-contract';
 import { type CoinInfo, nativeToken, Transaction, type TransactionId } from '@midnight-ntwrk/ledger';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
@@ -121,6 +127,19 @@ export const joinContract = async (
   return counterContract;
 };
 
+export const joinCombinedContract = async (
+  providers: CombinedContractProviders,
+  contractAddress: string,
+): Promise<DeployedCombinedContractContract> => {
+  const combinedContract = await findDeployedContract(providers, {
+    contractAddress,
+    contract: combinedContractInstance,
+    privateStateId: CombinedContractPrivateStateId,
+    initialPrivateState: { privateValue: 0 },
+  });
+  return combinedContract;
+};
+
 export const deploy = async (
   providers: CounterProviders,
   privateState: CounterPrivateState,
@@ -189,7 +208,7 @@ export const displayCombinedContractOwnerKey = async (
   combinedContract: DeployedCombinedContractContract,
 ): Promise<{ contractAddress: string; ownerKey: string | null }> => {
   const contractAddress = combinedContract.deployTxData.public.contractAddress;
-  
+
   const ownerKey = await getCombinedContractOwnerKey(providers, contractAddress);
   if (ownerKey === null) {
     logger.info(`There is no combined contract deployed at ${contractAddress}.`);
@@ -412,7 +431,9 @@ export const randomBytes = (length: number): Uint8Array => {
 export const buildFreshWallet = async (config: Config): Promise<Wallet & Resource> =>
   await buildWalletAndWaitForFunds(config, toHex(randomBytes(32)), '');
 
-export const buildFreshWalletReturnSeed = async (config: Config): Promise<{ wallet: Wallet & Resource, seed: string }> => {
+export const buildFreshWalletReturnSeed = async (
+  config: Config,
+): Promise<{ wallet: Wallet & Resource; seed: string }> => {
   const seed = toHex(randomBytes(32));
   const wallet = await buildWalletAndWaitForFunds(config, seed, '');
   return { wallet, seed };
@@ -432,8 +453,10 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
   };
 };
 
-
-export const configureCombinedContractProviders = async (wallet: Wallet & Resource, config: Config): Promise<CombinedContractProviders> => {
+export const configureCombinedContractProviders = async (
+  wallet: Wallet & Resource,
+  config: Config,
+): Promise<CombinedContractProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
     privateStateProvider: levelPrivateStateProvider<typeof CombinedContractPrivateStateId>({
@@ -446,7 +469,9 @@ export const configureCombinedContractProviders = async (wallet: Wallet & Resour
     proofProvider: httpClientProofProvider(config.proofServer),
     mintDIDzNFTZkConfigProvider: new NodeZkConfigProvider<'mintDIDzNFT'>(combinedContractConfig.zkConfigPath),
     getDIDzNFTOwnerZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTOwner'>(combinedContractConfig.zkConfigPath),
-    getDIDzNFTMetadataHashZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(combinedContractConfig.zkConfigPath),
+    getDIDzNFTMetadataHashZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(
+      combinedContractConfig.zkConfigPath,
+    ),
     getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(combinedContractConfig.zkConfigPath),
     incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
     getCounterZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(combinedContractConfig.zkConfigPath),

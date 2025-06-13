@@ -110,3 +110,13 @@ export function bytes32ToHex(bytes: Uint8Array | null): string {
   if (bytes.length !== 32) throw new Error('Input must be 32 bytes');
   return '0x' + Buffer.from(bytes).toString('hex');
 }
+
+export const generateRandomEd25519PublicKeyBytes = async (): Promise<Uint8Array> => {
+  const keyPair = await webcrypto.subtle.generateKey(
+    { name: "Ed25519", namedCurve: "Ed25519" },
+    true, // extractable
+    ["sign", "verify"]
+  );
+  const exported = await webcrypto.subtle.exportKey("raw", keyPair.publicKey);
+  return new Uint8Array(exported);
+};
