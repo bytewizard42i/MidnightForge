@@ -15,7 +15,7 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
+import { type ContractAddress, StateValue } from '@midnight-ntwrk/compact-runtime';
 import {
   CombinedContract,
   CombinedContractPrivateState,
@@ -65,6 +65,47 @@ let logger: Logger;
 // but won't try to overwrite the global property
 // @ts-expect-error: It's needed to enable WebSocket usage through apollo
 globalThis.WebSocket = WebSocket;
+
+export const getContractLedgerState = async <T, K>(
+  providers: CounterProviders | CombinedContractProviders,
+  contractAddress: ContractAddress,
+  contractInstance: { ledger: (data: StateValue) => K },
+  stateMapper: (ledgerState: K) => T | null,
+  logMessage: string,
+): Promise<T | null> => {
+  assertIsContractAddress(contractAddress);
+  logger.info(logMessage);
+  const state = await providers.publicDataProvider
+    .queryContractState(contractAddress)
+    .then((contractState) => (contractState != null ? stateMapper(contractInstance.ledger(contractState.data)) : null));
+  logger.info(`Ledger state: ${state}`);
+  return state;
+};
+
+export const displayGenericContractValue = async <T, K, C extends { deployTxData: { public: { contractAddress: ContractAddress } } }>(
+  providers: CounterProviders | CombinedContractProviders,
+  deployedContract: C,
+  contractInstance: { ledger: (data: StateValue) => K },
+  stateMapper: (ledgerState: K) => T | null,
+  logMessageChecking: string,
+  logMessageFound: (value: T, contractAddress: string) => string,
+  logMessageNotFound: (contractAddress: string) => string,
+): Promise<{ contractAddress: string; value: T | null }> => {
+  const contractAddress = deployedContract.deployTxData.public.contractAddress;
+  const value = await getContractLedgerState(
+    providers,
+    contractAddress,
+    contractInstance,
+    stateMapper,
+    logMessageChecking,
+  );
+  if (value === null) {
+    logger.info(logMessageNotFound(contractAddress));
+  } else {
+    logger.info(logMessageFound(value, contractAddress));
+  }
+  return { contractAddress, value };
+};
 
 export const getCounterLedgerState = async (
   providers: CounterProviders,
@@ -189,10 +230,7 @@ export const mintDIDzNFT = async (
   return finalizedTxData.public;
 };
 
-export const getDIDzNFT = async (
-  combinedContract: DeployedCombinedContractContract,
-  nftId: number,
-) => {
+export const getDIDzNFT = async (combinedContract: DeployedCombinedContractContract, nftId: number) => {
   logger.info(`Getting DIDz NFT for nftId: ${nftId}...`);
   const finalizedTxData = await combinedContract.callTx.getDIDzNFTFromId(BigInt(nftId));
   const nftResult = finalizedTxData.private.result;
@@ -212,13 +250,15 @@ export const displayCounterValue = async (
   providers: CounterProviders,
   counterContract: DeployedCounterContract,
 ): Promise<{ counterValue: bigint | null; contractAddress: string }> => {
-  const contractAddress = counterContract.deployTxData.public.contractAddress;
-  const counterValue = await getCounterLedgerState(providers, contractAddress);
-  if (counterValue === null) {
-    logger.info(`There is no counter contract deployed at ${contractAddress}.`);
-  } else {
-    logger.info(`Current counter value: ${Number(counterValue)}`);
-  }
+  const { contractAddress, value: counterValue } = await displayGenericContractValue(
+    providers,
+    counterContract,
+    { ledger: Counter.ledger },
+    (ledgerState) => ledgerState.round,
+    'Checking counter contract ledger state...',
+    (value) => `Current counter value: ${Number(value)}`,
+    (contractAddress) => `There is no counter contract deployed at ${contractAddress}.`,
+  );
   return { contractAddress, counterValue };
 };
 
@@ -226,14 +266,16 @@ export const displayCombinedContractOwnerKey = async (
   providers: CombinedContractProviders,
   combinedContract: DeployedCombinedContractContract,
 ): Promise<{ contractAddress: string; ownerKey: string | null }> => {
-  const contractAddress = combinedContract.deployTxData.public.contractAddress;
-
-  const ownerKey = await getCombinedContractOwnerKey(providers, contractAddress);
-  if (ownerKey === null) {
-    logger.info(`There is no combined contract deployed at ${contractAddress}.`);
-  } else {
-    logger.info(`Owner key: ${ownerKey}`);
-  }
+  const { contractAddress, value: ownerKeyBytes } = await displayGenericContractValue(
+    providers,
+    combinedContract,
+    { ledger: CombinedContract.ledger },
+    (ledgerState) => ledgerState.ownerKey,
+    'Checking combined contract owner key...',
+    (value, contractAddress) => `Owner key: ${toHex(value as Uint8Array)}`,
+    (contractAddress) => `There is no combined contract deployed at ${contractAddress}.`,
+  );
+  const ownerKey = ownerKeyBytes !== null ? toHex(ownerKeyBytes as Uint8Array) : null;
   return { contractAddress, ownerKey };
 };
 
@@ -241,13 +283,15 @@ export const displayCombinedContractOwnerAddress = async (
   providers: CombinedContractProviders,
   combinedContract: DeployedCombinedContractContract,
 ): Promise<{ contractAddress: string; ownerAddress: Uint8Array | null }> => {
-  const contractAddress = combinedContract.deployTxData.public.contractAddress;
-  const ownerAddress = await getCombinedContractOwnerAddress(providers, contractAddress);
-  if (ownerAddress === null) {
-    logger.info(`There is no combined contract deployed at ${contractAddress}.`);
-  } else {
-    logger.info(`Owner address: ${ownerAddress}`);
-  }
+  const { contractAddress, value: ownerAddress } = await displayGenericContractValue(
+    providers,
+    combinedContract,
+    { ledger: CombinedContract.ledger },
+    (ledgerState) => ledgerState.ownerAddress,
+    'Checking combined contract owner address...',
+    (value, contractAddress) => `Owner address: ${value}`,
+    (contractAddress) => `There is no combined contract deployed at ${contractAddress}.`,
+  );
   return { contractAddress, ownerAddress };
 };
 
