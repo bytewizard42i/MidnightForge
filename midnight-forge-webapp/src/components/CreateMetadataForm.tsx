@@ -24,18 +24,24 @@ interface NFTMetadata {
 }
 
 const CreateMetadataForm: React.FC = () => {
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
+  const [name, setName] = useState<string>('Admin Role NFT');
+  const [description, setDescription] = useState<string>('This is an Admin Role NFT');
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [attributes, setAttributes] = useState<Attribute[]>([{ trait_type: '', value: '' }]);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null); // New state for image preview
+  const [attributes, setAttributes] = useState<Attribute[]>([{ trait_type: 'Role', value: 'Admin' }]);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<boolean>(false);
 
   useEffect(() => {
-
-  }, []);
+    // Cleanup the object URL when component unmounts or imageFile changes
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   const handleAttributeChange = (index: number, field: keyof Attribute, value: string) => {
     const newAttributes = [...attributes];
@@ -53,11 +59,18 @@ const CreateMetadataForm: React.FC = () => {
   };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (imagePreviewUrl) { // Revoke previous URL if exists
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+
     if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreviewUrl(URL.createObjectURL(file)); // Create URL for preview
       setError(''); // Clear any previous errors
     } else {
       setImageFile(null);
+      setImagePreviewUrl(null);
     }
   };
 
@@ -65,6 +78,10 @@ const CreateMetadataForm: React.FC = () => {
     setName('');
     setDescription('');
     setImageFile(null);
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+    setImagePreviewUrl(null);
     setAttributes([{ trait_type: '', value: '' }]);
     setStatusMessage('');
     setError('');
@@ -123,19 +140,16 @@ const CreateMetadataForm: React.FC = () => {
       console.log('Metadata CID:', metadataCid);
       console.log('Metadata IPFS URI:', ipfsMetadataUri);
       // with a gateway url
-        // --- New Gateway Links ---
-        console.log('--- Gateway Links ---');
-        console.log('Image (ipfs.io): ', `https://ipfs.io/ipfs/${imageCid}`);
-        console.log('Metadata (ipfs.io): ', `https://ipfs.io/ipfs/${metadataCid}`);
-        console.log('Image (nftstorage.link): ', `https://nftstorage.link/ipfs/${imageCid}`);
-        console.log('Metadata (nftstorage.link): ', `https://nftstorage.link/ipfs/${metadataCid}`);
-        console.log('Image (cloudflare-ipfs.com): ', `https://cloudflare-ipfs.com/ipfs/${imageCid}`);
-        console.log('Metadata (cloudflare-ipfs.com): ', `https://cloudflare-ipfs.com/ipfs/${metadataCid}`);
-        console.log('Image (dweb.link): ', `https://dweb.link/ipfs/${imageCid}`);
-        console.log('Metadata (dweb.link): ', `https://dweb.link/ipfs/${metadataCid}`);
-        console.log('---------------------');
-
-
+      console.log('--- Gateway Links ---');
+      console.log('Image (ipfs.io): ', `https://ipfs.io/ipfs/${imageCid}`);
+      console.log('Metadata (ipfs.io): ', `https://ipfs.io/ipfs/${metadataCid}`);
+      console.log('Image (nftstorage.link): ', `https://nftstorage.link/ipfs/${imageCid}`);
+      console.log('Metadata (nftstorage.link): ', `https://nftstorage.link/ipfs/${metadataCid}`);
+      console.log('Image (cloudflare-ipfs.com): ', `https://cloudflare-ipfs.com/ipfs/${imageCid}`);
+      console.log('Metadata (cloudflare-ipfs.com): ', `https://cloudflare-ipfs.com/ipfs/${metadataCid}`);
+      console.log('Image (dweb.link): ', `https://dweb.link/ipfs/${imageCid}`);
+      console.log('Metadata (dweb.link): ', `https://dweb.link/ipfs/${metadataCid}`);
+      console.log('---------------------');
       console.log('Metadata Hash (SHA-256):', metadataHash);
       console.log('Generated Metadata:', metadata);
       console.log('=====================================');
@@ -220,6 +234,11 @@ const CreateMetadataForm: React.FC = () => {
             <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
               Selected: {imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)} MB)
             </p>
+          )}
+          {imagePreviewUrl && (
+            <div style={{ marginTop: '10px', textAlign: 'center' }}>
+              <img src={imagePreviewUrl} alt="Image Preview" style={{ maxWidth: '100%', maxHeight: '200px', border: '1px solid #ddd', borderRadius: '4px' }} />
+            </div>
           )}
         </div>
 
