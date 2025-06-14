@@ -1,5 +1,5 @@
 import React, { type PropsWithChildren, createContext, useState, useCallback, useMemo } from 'react';
-import { type WalletProviders, type WalletAPIProvider /*BrowserWalletManager */ } from './WalletManager';
+import { type WalletProviders, type WalletAPIProvider, BrowserWalletManager } from './WalletManager';
 import { type Logger } from 'pino';
 import { type DAppConnectorWalletAPI } from '@midnight-ntwrk/dapp-connector-api';
 
@@ -31,10 +31,11 @@ export type WalletProviderProps = PropsWithChildren<{
 
 export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger, children }) => {
   // Create persistent wallet manager
-  // const walletManager = useMemo(() => {
-  //   console.log('🔧 Creating new BrowserWalletManager instance');
-  //   return new BrowserWalletManager(logger);
-  // }, [logger]);
+  const walletManager = useMemo(() => {
+    // console.log('🔧 Creating new BrowserWalletManager instance');
+    logger.info('🔧 Creating new BrowserWalletManager instance');
+    return new BrowserWalletManager(logger);
+  }, [logger]);
 
   // State to store the actual wallet instance and providers
   const [wallet, setWallet] = useState<DAppConnectorWalletAPI | null>(null);
@@ -62,7 +63,7 @@ export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger
   const isWalletConnected = wallet !== null && walletProviders !== null;
 
   const contextValue: WalletContextType = useMemo(() => ({
-    // walletManager,
+    walletManager,
     wallet,
     walletProviders,
     setWallet: handleSetWallet,
