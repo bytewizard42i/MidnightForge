@@ -1,17 +1,18 @@
 import type { Request, Response, NextFunction } from 'express';
 import express from 'express';
 import cors from 'cors';
-import { getServerConfig } from './config.js';
+import { getServerConfig, ServerConfig } from './config.js';
 import logger from './logger.js';
 import type { ApiResponse, HealthCheckResponse } from './types.js';
 import { SimpleWalletService } from './services/simpleWalletService.js';
 import { ContractService } from './services/contractService.js';
+import * as Rx from 'rxjs';
 
 // load env file
 import dotenv from 'dotenv';
 dotenv.config();
 
-const config = getServerConfig();
+let config: ServerConfig = getServerConfig();
 const app = express();
 
 // Initialize services
@@ -21,12 +22,35 @@ let contractService: ContractService | null = null;
 // Initialize wallet service on startup
 const initializeServices = async () => {
   try {
+    config = getServerConfig();
+
     if (!config.walletSeed) {
       throw new Error('WALLET_SEED environment variable is required');
     }
     
     await walletService.initialize(config.midnight, config.walletSeed, config.walletFilename);
-    contractService = new ContractService(walletService.getProviders(), walletService.getWallet());
+    
+    const wallet = await walletService.getWalletFromSeed(config);
+    // console.log('Wallet object created:', !!wallet);
+    // console.log('Wallet methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(wallet)));
+
+    const state = await Rx.firstValueFrom(wallet.state());
+    // console.log('Raw wallet state:', state);
+    // console.log('State type:', typeof state);
+    // console.log('State keys:', state ? Object.keys(state) : 'null/undefined');
+    logger.info('Wallet state:', state);
+
+    // console.log('After getWalletFromSeed - wallet:', await wallet.state().toPromise());
+    contractService = new ContractService(walletService.getProviders(), wallet);
+
+    // expect(this.wallet).not.toBeNull();
+
+
+    // check if state is not null or undefined so that we notify succcessfully initialized
+    if (state === null || state === undefined) {
+      throw new Error('Wallet state is null or undefined');
+    }
+
     logger.info('Services initialized successfully');
   } catch (error) {
     logger.error('Failed to initialize services:', error);

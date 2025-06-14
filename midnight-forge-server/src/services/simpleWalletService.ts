@@ -1,6 +1,9 @@
-import type { Config } from '../config.js';
+import type { Config, ServerConfig } from '../config.js';
 import type { CombinedContractProviders, ServerWallet } from '../types.js';
 import logger from '../logger.js';
+import { Resource, WalletBuilder } from '@midnight-ntwrk/wallet';
+import { getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { Wallet } from '@midnight-ntwrk/wallet-api';
 
 export class SimpleWalletService {
   private initialized = false;
@@ -24,12 +27,39 @@ export class SimpleWalletService {
     }
   }
 
-  getWallet(): ServerWallet {
-    if (!this.initialized) {
-      throw new Error('Wallet not initialized. Call initialize() first.');
+  async getWalletFromSeed(config: ServerConfig): Promise<Wallet & Resource> {
+    // console.log('=== DEBUG getWalletFromSeed ===');
+    // console.log('config.walletSeed:', JSON.stringify(config?.walletSeed));
+    // console.log('config.walletSeed length:', config?.walletSeed?.length);
+    
+    const actualSeed = config.walletSeed;
+    // console.log('actualSeed:', JSON.stringify(actualSeed));
+    
+    // console.log('Building wallet with:');
+    // console.log('- indexer:', config.midnight.indexer);
+    // console.log('- indexerWS:', config.midnight.indexerWS);
+    // console.log('- proofServer:', config.midnight.proofServer);
+    // console.log('- node:', config.midnight.node);
+    // console.log('- networkId:', getZswapNetworkId());
+    
+    try {
+      const wallet = await WalletBuilder.build(
+        config.midnight.indexer,
+        config.midnight.indexerWS,
+        config.midnight.proofServer,
+        config.midnight.node,
+        actualSeed,
+        getZswapNetworkId(),
+        'warn',
+      );
+      
+      console.log('Wallet created successfully:', !!wallet);
+      console.log('=== END DEBUG ===');
+      return wallet;
+    } catch (error) {
+      console.error('Error building wallet:', error);
+      throw error;
     }
-    // Return a mock wallet for now
-    return {} as ServerWallet;
   }
 
   getProviders(): CombinedContractProviders {

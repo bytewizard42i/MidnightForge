@@ -13,12 +13,14 @@ import type {
   DeployedCombinedContractContract
 } from '../types.js';
 import logger from '../logger.js';
+import { Resource } from '@midnight-ntwrk/wallet';
+import { Wallet } from '@midnight-ntwrk/wallet-api';
 
 export class ContractService {
   private providers: CombinedContractProviders;
-  private wallet: ServerWallet;
+  private wallet: Wallet & Resource;
 
-  constructor(providers: CombinedContractProviders, wallet: ServerWallet) {
+  constructor(providers: CombinedContractProviders, wallet: Wallet & Resource) {
     this.providers = providers;
     this.wallet = wallet;
   }

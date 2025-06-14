@@ -68,14 +68,15 @@ export const getServerConfig = (): ServerConfig => {
   const isProduction = nodeEnv === 'production';
   const isLocal = process.env.MIDNIGHT_NETWORK === 'local';
   const ip = process.env.IP || 'localhost';
-  
+  const walletSeed = process.env.WALLET_SEED || '';
+
   return {
     port: parseInt(process.env.PORT || '3001', 10),
     ip,
     nodeEnv,
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     logLevel: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
-    walletSeed: process.env.WALLET_SEED || '',
+    walletSeed: walletSeed,
     walletFilename: process.env.WALLET_FILENAME || 'server_wallet.dat',
     midnight: isLocal ? new LocalConfig() : new TestnetRemoteConfig(),
   };
