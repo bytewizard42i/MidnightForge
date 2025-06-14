@@ -1,12 +1,12 @@
 import './App.css';
 import CreateMetadataForm from './components/CreateMetadataForm';
-// import WalletConnection from './components/WalletConnection';
+import WalletConnection from './components/WalletConnection';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        {/* <WalletConnection /> */}
+        <WalletConnection />
         <CreateMetadataForm />
       </header>
     </div>
