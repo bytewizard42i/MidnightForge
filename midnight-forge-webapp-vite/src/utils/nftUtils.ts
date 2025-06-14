@@ -1,6 +1,8 @@
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { type FinalizedTxData } from '@midnight-ntwrk/midnight-js-types';
+import { type FinalizedTxData, type PrivateState } from '@midnight-ntwrk/midnight-js-types';
 import { type BrowserWalletManager } from '../contexts/WalletManager';
+import { hexStringToBytes32 } from '../../../counter-cli/src/utils';
+import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
 
 /**
  * NFT Utilities for the Midnight Forge webapp
@@ -15,7 +17,43 @@ import { type BrowserWalletManager } from '../contexts/WalletManager';
  * 3. Call the functions with the deployed contract instance
  */
 
-import { mintDIDzNFT, joinCombinedContract } from '../../../counter-cli/src/api'
+import { mintDIDzNFT, joinCombinedContract, deployCombinedContract } from '../../../counter-cli/src/api'
+import type { CombinedContractContract, DeployedCombinedContractContract } from '../../../counter-cli/src/common-types';
+import { randomBytes } from 'crypto';
+
+/** Deploy a new contract */
+export async function deployNewContract(
+  walletManager: BrowserWalletManager,
+  privateState: PrivateState<CombinedContractContract>,
+  ownerAddress: string
+): Promise<ContractAddress> {
+    const providers = await walletManager.getCombinedContractProviders();
+    if (!providers) {
+        throw new Error('Wallet not connected');
+    }
+
+    // random secret key
+    const ownerAddressBytes = hexStringToBytes32(ownerAddress);
+    const ownerSecretKey = randomBytes(32);
+
+    const contract = await deployCombinedContract(providers, privateState, ownerSecretKey, ownerAddressBytes);
+    return contract.deployTxData.public.contractAddress;
+}
+
+/** Join an existing contract */
+export async function joinExistingContract(
+  walletManager: BrowserWalletManager,
+  contractAddress: ContractAddress
+): Promise<DeployedCombinedContractContract> {
+  const providers = await walletManager.getCombinedContractProviders();
+  if (!providers) {
+    throw new Error('Wallet not connected');
+  }
+  const contract = await joinCombinedContract(providers, contractAddress);
+  return contract;
+}
+
+/** Mint an NFT */
 
 /**
  * Example of how to use the existing mintDIDzNFT function from api.ts
@@ -72,37 +110,6 @@ export async function getNFTExample(
   `);
 }
 
-/**
- * Utility function to generate a DID (from api.ts utils)
- */
-export async function generateDID(ownerAddress: string, uniqueId: string): Promise<{ bytes: Uint8Array }> {
-  // Create a deterministic input by combining owner address and uniqueId
-  const input = `${ownerAddress}:${uniqueId}`;
-  
-  // Convert to bytes
-  const encoder = new TextEncoder();
-  const inputBytes = encoder.encode(input);
-  
-  // Generate a 32-byte hash using SHA-256
-  const hashBuffer = await crypto.subtle.digest('SHA-256', inputBytes);
-  const hashBytes = new Uint8Array(hashBuffer);
-  
-  return {
-    bytes: hashBytes
-  };
-}
-
-/**
- * Utility function to generate metadata hash (from api.ts utils)
- */
-export async function generateMetadataHash(metadata: string): Promise<Uint8Array> {
-  const encoder = new TextEncoder();
-  const metadataBytes = encoder.encode(metadata);
-  
-  // Generate a 32-byte hash using SHA-256
-  const hashBuffer = await crypto.subtle.digest('SHA-256', metadataBytes);
-  return new Uint8Array(hashBuffer);
-}
 
 /**
  * Available NFT functions from api.ts:

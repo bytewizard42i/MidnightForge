@@ -1,0 +1,234 @@
+.deployContainer {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.deployHeader {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.deployHeader h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.deployHeader p {
+  color: #666;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.deployForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.input {
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: white;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.deployButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.deployButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.deployButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.deployButton.deploying {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorMessage {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #ffcdd2;
+  font-size: 0.95rem;
+}
+
+.statusMessage {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #bbdefb;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.successContainer {
+  text-align: center;
+  padding: 30px;
+}
+
+.successIcon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.successContainer h3 {
+  color: #2e7d32;
+  font-size: 1.8rem;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.contractDetails {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 25px;
+  margin: 25px 0;
+  border: 1px solid #e9ecef;
+}
+
+.detailItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detailItem:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.detailItem strong {
+  color: #495057;
+  font-weight: 600;
+}
+
+.address {
+  background: #e9ecef;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #495057;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nextStepMessage {
+  background: linear-gradient(135deg, #e8f5e8 0%, #d4f6d4 100%);
+  color: #2e7d32;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  font-weight: 500;
+  border: 1px solid #c8e6c9;
+}
+
+.resetButton {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.3s ease;
+}
+
+.resetButton:hover {
+  background: #5a6268;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .deployContainer {
+    padding: 20px;
+  }
+  
+  .deployHeader h2 {
+    font-size: 1.6rem;
+  }
+  
+  .contractDetails {
+    padding: 20px;
+  }
+  
+  .detailItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .address {
+    max-width: 100%;
+    word-break: break-all;
+  }
+} 
