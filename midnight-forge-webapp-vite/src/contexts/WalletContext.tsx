@@ -2,6 +2,9 @@ import React, { type PropsWithChildren, createContext, useState, useCallback, us
 import { type WalletProviders, type WalletAPIProvider, BrowserWalletManager } from './WalletManager';
 import { type Logger } from 'pino';
 import { type DAppConnectorWalletAPI } from '@midnight-ntwrk/dapp-connector-api';
+import type { WalletState } from '@midnight-ntwrk/wallet-api';
+
+type WalletConnectionStatusType = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 /**
  * Enhanced wallet context that stores both the manager AND the wallet instance
@@ -17,10 +20,18 @@ export interface WalletContextType {
   // Setters to save wallet when connected
   setWallet: (wallet: DAppConnectorWalletAPI | null) => void;
   setWalletProviders: (providers: WalletProviders | null) => void;
-  
+
   // Convenience methods
   isWalletConnected: boolean;
   walletAddress: string | null;
+
+  // Contains the wallet state, including the sync progress (coins, balances, etc.)
+  walletState: WalletState | null;
+  setWalletState: (state: WalletState | null) => void;
+
+  // wallet connection status
+  walletConnectionStatus: WalletConnectionStatusType;
+  setWalletConnectionStatus: (status: WalletConnectionStatusType) => void;
 }
 
 export const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -41,6 +52,8 @@ export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger
   const [wallet, setWallet] = useState<DAppConnectorWalletAPI | null>(null);
   const [walletProviders, setWalletProviders] = useState<WalletProviders | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletState, setWalletState] = useState<WalletState | null>(null);
+  const [walletConnectionStatus, setWalletConnectionStatus] = useState<WalletConnectionStatusType>('disconnected');
 
   // Enhanced setters that also update related state
   const handleSetWallet = useCallback((newWallet: DAppConnectorWalletAPI | null) => {
@@ -60,7 +73,7 @@ export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger
   }, [wallet]);
 
   // Computed values
-  const isWalletConnected = wallet !== null && walletProviders !== null;
+  const isWalletConnected = walletConnectionStatus === 'connected';
 
   const contextValue: WalletContextType = useMemo(() => ({
     walletManager,
@@ -70,7 +83,11 @@ export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger
     setWalletProviders: handleSetWalletProviders,
     isWalletConnected,
     walletAddress,
-  }), [wallet, walletProviders, handleSetWallet, handleSetWalletProviders, isWalletConnected, walletAddress]);
+    walletState,
+    setWalletState,
+    walletConnectionStatus,
+    setWalletConnectionStatus,
+  }), [wallet, walletProviders, handleSetWallet, handleSetWalletProviders, isWalletConnected, walletAddress, walletState, setWalletState, walletConnectionStatus, setWalletConnectionStatus]);
 
   return (
     <WalletContext.Provider value={contextValue}>

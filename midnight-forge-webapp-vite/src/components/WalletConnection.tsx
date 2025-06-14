@@ -1,44 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useWalletContext } from '../hooks/useWalletContext';
+import type { WalletState } from '@midnight-ntwrk/wallet-api';
 
-interface WalletState {
-  status: 'disconnected' | 'connecting' | 'connected' | 'error';
-  address?: string;
-  error?: string;
-}
+// interface WalletState {
+//   status: 'disconnected' | 'connecting' | 'connected' | 'error';
+//   address?: string;
+//   error?: string;
+// }
 
 const SimpleWalletConnection: React.FC = () => {
-  const [walletState, setWalletState] = useState<WalletState>({ status: 'disconnected' });
+  // const [walletState, setWalletState] = useState<WalletState>({ status: 'disconnected' });
 
   // set the wallet context
-  const {setWallet, setWalletProviders, walletProviders, isWalletConnected, walletAddress} = useWalletContext();
+  const {setWallet, isWalletConnected, walletState, setWalletState, walletConnectionStatus, setWalletConnectionStatus} = useWalletContext();
 
-//   useEffect(() => {
-//     if (isWalletConnected) {
-      
-      
-//       // When connected, save the wallet and providers to context
-//       if (walletProviders.status === 'connected') {
-//         try {
-//           setWallet(walletProviders.wallet);
-//           const providers = await walletProviders.getProviders();
-//           setWalletProviders(providers);
-//           console.log('💾 Wallet saved to context!', { wallet: conn.wallet, providers });
-//         } catch (error) {
-//           console.error('Failed to get providers:', error);
-//         }
-//       } else {
-//         // Clear wallet from context when disconnected
-//         setWallet(null);
-//         setWalletProviders(null);
-//       }
-//     });
-    
-//     return () => subscription.unsubscribe();
-//   }, [walletManager, setWallet, setWalletProviders]);
+  useEffect(() => {
+    console.log('Wallet Connection Status:', walletConnectionStatus);
+    console.log('Is Wallet Connected:', isWalletConnected);
+    console.log('Get wallet state:', walletState);
+  }, [walletConnectionStatus, isWalletConnected, walletState]);
 
   const connectWallet = async () => {
-    setWalletState({ status: 'connecting' });
+    setWalletConnectionStatus('connecting');
     
     try {
       // Check if Midnight Lace wallet is available
@@ -57,38 +40,37 @@ const SimpleWalletConnection: React.FC = () => {
       // Enable the wallet
       const wallet = await connector.enable();
       console.log('Wallet enabled successfully');
+      setWallet(wallet);
 
       // Get wallet state
-      const state = await wallet.state();
+      const state: WalletState = await wallet.state();
       console.log('Wallet state:', state);
-      setWallet(wallet);
+      
+
+      if (state != null) {
+        setWalletState(state);
+        setWalletConnectionStatus('connected');
+      } else {
+        setWalletConnectionStatus('disconnected');
+      }
 
       const serviceUriConfig = await connector.serviceUriConfig();
       console.log('Service URI config:', serviceUriConfig);
 
-      // set the wallet context
-      // const providers = walletProviders;
-      // console.log('Providers:', providers);
 
-      setWalletState({
-        status: 'connected',
-        address: state.address,
-      });
+
     } catch (error) {
       console.error('Failed to connect wallet:', error);
-      setWalletState({
-        status: 'error',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      setWalletConnectionStatus('error');
     }
   };
 
   const disconnectWallet = () => {
-    setWalletState({ status: 'disconnected' });
+    setWalletConnectionStatus('disconnected');
   };
 
   const renderStatus = () => {
-    switch (walletState.status) {
+    switch (walletConnectionStatus) {
              case 'disconnected':
          return (
            <div style={{ 
@@ -235,7 +217,7 @@ const SimpleWalletConnection: React.FC = () => {
                    borderRadius: '4px', 
                    fontSize: '0.9em',
                    wordBreak: 'break-all'
-                 }}>{walletState.address}</code>
+                 }}>{walletState?.address}</code>
                </p>
                <p style={{ 
                  color: 'grey', // more darker since it's a label 
@@ -246,7 +228,7 @@ const SimpleWalletConnection: React.FC = () => {
                    color: '#ffffff', 
                    fontWeight: 'bold',
                    fontSize: '1.1em'
-                 }}>{walletState.address?.includes('addr_test') ? 'TestNet' : 'Unknown'}</span>
+                 }}>{walletState?.address?.includes('addr_test') ? 'TestNet' : 'Unknown'}</span>
                </p>
              </div>
              <button 
@@ -316,7 +298,7 @@ const SimpleWalletConnection: React.FC = () => {
                  fontSize: '0.95em',
                  margin: '0'
                }}>
-                 <strong>Error:</strong> {walletState.error}
+                 <strong>Error:</strong> {walletConnectionStatus === 'error' ? 'Unknown error' : ''}
                </p>
              </div>
              <button 
