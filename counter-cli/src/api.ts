@@ -223,16 +223,16 @@ export const mintDIDzNFT = async (
   combinedContract: DeployedCombinedContractContract,
   metadataHash: Uint8Array,
   did: Uint8Array,
-): Promise<FinalizedTxData> => {
+): Promise<bigint> => {
   logger.info('Minting DIDz NFT...');
   const finalizedTxData = await combinedContract.callTx.mintDIDzNFT({ bytes: did }, { bytes: metadataHash });
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
-  return finalizedTxData.public;
+  return finalizedTxData.private.result;
 };
 
-export const getDIDzNFT = async (combinedContract: DeployedCombinedContractContract, nftId: number) => {
+export const getDIDzNFT = async (combinedContract: DeployedCombinedContractContract, nftId: bigint) => {
   logger.info(`Getting DIDz NFT for nftId: ${nftId}...`);
-  const finalizedTxData = await combinedContract.callTx.getDIDzNFTFromId(BigInt(nftId));
+  const finalizedTxData = await combinedContract.callTx.getDIDzNFTFromId(nftId);
   const nftResult = finalizedTxData.private.result;
 
   // Decode Uint8Array fields to hexadecimal strings for readability
@@ -244,6 +244,46 @@ export const getDIDzNFT = async (combinedContract: DeployedCombinedContractContr
 
   // logger.info(`DIDz NFT: ${JSON.stringify(decodedNft, (key, value) => typeof value === 'bigint' ? value.toString() : value)}`);
   return nft;
+};
+
+export const transferDIDzNFT = async (
+  combinedContract: DeployedCombinedContractContract,
+  nftId: bigint,
+  newRecipientDID: Uint8Array,
+  newOwnerAddress: Uint8Array,
+): Promise<FinalizedTxData> => {
+  logger.info(`Transferring DIDz NFT ${nftId} to DID ${newRecipientDID} and address ${newOwnerAddress}`);
+  const finalizedTxData = await combinedContract.callTx.transferDIDzNFT(
+    BigInt(nftId),
+    { bytes: newRecipientDID },
+    newOwnerAddress,
+  );
+  logger.info(`DIDz NFT ${nftId} transferred. TxId: ${finalizedTxData.public.txId}`);
+  return finalizedTxData.public;
+};
+
+export const updateDIDzNFTMetadata = async (
+  combinedContract: DeployedCombinedContractContract,
+  nftId: bigint,
+  newMetadataHash: Uint8Array,
+): Promise<FinalizedTxData> => {
+  logger.info(`Updating metadata for DIDz NFT ${nftId} with new hash ${newMetadataHash}`);
+  const finalizedTxData = await combinedContract.callTx.updateDIDzNFTMetadata(
+    BigInt(nftId),
+    { bytes: newMetadataHash },
+  );
+  logger.info(`DIDz NFT ${nftId} metadata updated. TxId: ${finalizedTxData.public.txId}`);
+  return finalizedTxData.public;
+};
+
+export const burnDIDzNFT = async (
+  combinedContract: DeployedCombinedContractContract,
+  nftId: bigint,
+): Promise<FinalizedTxData> => {
+  logger.info(`Burning DIDz NFT ${nftId}`);
+  const finalizedTxData = await combinedContract.callTx.burnDIDzNFT(BigInt(nftId));
+  logger.info(`DIDz NFT ${nftId} burned. TxId: ${finalizedTxData.public.txId}`);
+  return finalizedTxData.public;
 };
 
 export const displayCounterValue = async (

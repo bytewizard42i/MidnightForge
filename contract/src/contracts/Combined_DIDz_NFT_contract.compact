@@ -262,7 +262,7 @@ export circuit getOwnerAddress(): Bytes<32> {
 }
 
 export circuit getDIDzNFTFromId(nftId: Field): NFT {
-    assert didzNFTs.member(nftId) "DIDz NFT not found";
+    assert didzNFTs.member(nftId) "ERR_NOT_FOUND: DIDz NFT not found";
 
     const _did = didzNFTs.lookup(nftId);
     const _metadataHash = nftMetadata.lookup(nftId);
@@ -273,6 +273,104 @@ export circuit getDIDzNFTFromId(nftId: Field): NFT {
         metadataHash: _metadataHash.bytes,
         did: _did.bytes
     };
+}
+
+// ----------------------------------------
+// === Circuit: transferDIDzNFT() ===
+// ----------------------------------------
+
+/*
+ * export circuit transferDIDzNFT
+ * -----------------------------------------------------------------------
+ * Transfers ownership of a DIDz NFT to a new recipient DID and owner address.
+ * Only the current owner of the NFT can initiate the transfer.
+ *
+ * Params:
+ *   nftId             – Field identifier of the DIDz NFT to transfer.
+ *   newRecipientDID   – The Decentralized Identifier (DID) of the new NFT recipient.
+ *   newOwnerAddress   – The public address of the new NFT owner.
+ *
+ * Returns:
+ *   None
+ */
+export circuit transferDIDzNFT(nftId: Field, newRecipientDID: DID, newOwnerAddress: Bytes<32>): [] {
+
+    // Assert that the NFT exists
+    assert didzNFTs.member(nftId) "ERR_NOT_FOUND: DIDz NFT not found";
+
+    // Verify that the caller is the current owner of the NFT
+    assert nftToOwnerAddress.lookup(nftId) == own_public_key().bytes
+        "ERR_AUTH: Only the current owner can transfer this DIDz NFT";
+
+    // Update the ownership mappings
+    didzNFTs.insert(nftId, newRecipientDID);
+    nftToOwnerAddress.insert(nftId, newOwnerAddress);
+
+    return;
+}
+
+// ----------------------------------------
+// === Circuit: updateDIDzNFTMetadata() ===
+// ----------------------------------------
+
+/*
+ * export circuit updateDIDzNFTMetadata
+ * -----------------------------------------------------------------------
+ * Updates the metadata hash for an existing DIDz NFT.
+ * Only the current owner of the NFT can update its metadata.
+ *
+ * Params:
+ *   nftId             – Field identifier of the DIDz NFT whose metadata is to be updated.
+ *   newMetadataHash   – The new cryptographic hash of the NFT's metadata.
+ *
+ * Returns:
+ *   None
+ */
+export circuit updateDIDzNFTMetadata(
+    nftId: Field,
+    newMetadataHash: NFTMetadataHash
+): [] {
+    // Assert that the NFT exists
+    assert nftMetadata.member(nftId) "ERR_NOT_FOUND: DIDz NFT not found";
+
+    // Verify that the caller is the current owner of the NFT
+    assert nftToOwnerAddress.lookup(nftId) == own_public_key().bytes
+        "ERR_AUTH: Only the current owner can update this DIDz NFT's metadata";
+
+    // Update the metadata hash
+    nftMetadata.insert(nftId, newMetadataHash);
+}
+
+// ----------------------------------------
+// === Circuit: burnDIDzNFT() ===
+// ----------------------------------------
+
+/*
+ * export circuit burnDIDzNFT
+ * -----------------------------------------------------------------------
+ * Permanently removes a DIDz NFT from the registry.
+ * Only the current owner of the NFT can initiate the burning process.
+ *
+ * Params:
+ *   nftId             – Field identifier of the DIDz NFT to burn.
+ *
+ * Returns:
+ *   None
+ */
+export circuit burnDIDzNFT(
+    nftId: Field
+): [] {
+    // Assert that the NFT exists
+    assert didzNFTs.member(nftId) "ERR_NOT_FOUND: DIDz NFT not found";
+
+    // Verify that the caller is the current owner of the NFT
+    assert nftToOwnerAddress.lookup(nftId) == own_public_key().bytes
+        "ERR_AUTH: Only the current owner can burn this DIDz NFT";
+
+    // Remove from registry maps
+    didzNFTs.remove(nftId);
+    nftMetadata.remove(nftId);
+    nftToOwnerAddress.remove(nftId);
 }
 
 // circuit getDIDzNFTFromDid(did: DID): NFT {
