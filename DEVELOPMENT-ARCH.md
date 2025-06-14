@@ -78,6 +78,7 @@
   - `ownerKey: Bytes<32>` — On-chain public key of the contract owner
   - `globalCounter: Counter` — Used for unique NFT IDs and entropy
   - `ownerAddress: Bytes<32>` — The owner's public key (derived from `coinPublicKeyLegacy`), used for authorization checks in circuits like `mintDIDzNFT`.
+  - `NFT` Struct: Defines the structure of a DIDz NFT, including `ownerAddress` (Bytes<32>), `metadataHash` (Bytes<32>), and `did` (Bytes<32>). This struct is returned by the `getDIDzNFTFromId` circuit.
 
 - **Access Patterns:**
   - Circuits read/write these fields as part of minting and querying NFTs
@@ -86,14 +87,40 @@
 
 ### 4. Minting and Ownership Logic
 
+- **Minting Availability**: The contract now fully supports minting of DIDz NFTs.
 - **Minting Flow:**
   1. Only the contract owner can mint new NFTs (enforced by signature check)
   2. The global counter is incremented to generate a unique NFT ID
   3. The recipient DID, metadata hash, and (optionally) metadata CID are stored on-chain
 
+- **NFT Retrieval:**
+  - The `getDIDzNFT` function fetches the `NFT` struct by calling the `getDIDzNFTFromId` circuit. The actual `NFT` data is extracted from the `finalizedTxData.private.result` field of the transaction response.
+
 - **Ownership Model:**
   - Ownership is tracked by mapping NFT ID to DID
   - Only the owner (as defined by `ownerKey`/`ownerAddress`) can mint
+
+### 4.1. Core NFT Operations (MVP)
+
+- **Transferability (`transferDIDzNFT`)**:
+  - Allows the current owner of a DIDz NFT to transfer its ownership to a new recipient DID and associated owner address.
+  - Ensures that only the authenticated current owner can initiate a transfer.
+
+- **Metadata Updatability (`updateDIDzNFTMetadata`)**:
+  - Provides a mechanism for the current owner of a DIDz NFT to update the cryptographic hash of its associated metadata.
+  - This is crucial for dynamic credentials where the underlying data (and thus its hash) might change over time.
+
+- **Burning/Revocation (`burnDIDzNFT`)**:
+  - Enables the permanent removal of a DIDz NFT from the ledger.
+  - Only the current owner can initiate the burning process, which removes the NFT's entries from `didzNFTs`, `nftMetadata`, and `nftToOwnerAddress` maps.
+  - Essential for revoking credentials or removing outdated/invalid NFTs.
+
+---
+
+### API Refinements
+
+-   **Generic State Fetching (`getContractLedgerState`)**: This function provides a reusable way to query contract states by taking a contract instance, a state mapper, and logging messages. It reduces duplication across various state retrieval functions (`getCounterLedgerState`, `getCombinedContractOwnerKey`, `getCombinedContractOwnerAddress`).
+-   **Generic Display Function (`displayGenericContractValue`)**: Builds upon `getContractLedgerState` to provide a standardized way to display contract-related values. It handles the common logic for fetching and logging results, including scenarios where the contract value is not found, making display functions (`displayCounterValue`, `displayCombinedContractOwnerKey`, `displayCombinedContractOwnerAddress`) more concise and consistent.
 
 ---
 
@@ -115,8 +142,8 @@
 
 - **Potential Upgrades:**
   - Support for additional DID methods
-  - Metadata versioning or updates
-  - Additional circuits (e.g., transfer, burn, revoke)
+  - Further metadata versioning capabilities (beyond simple hash update)
+  - More advanced transfer/ownership models
   - Enhanced privacy features (e.g., shielded metadata)
 
 ---
