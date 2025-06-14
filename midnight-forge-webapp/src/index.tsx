@@ -1,8 +1,15 @@
+/**
+ * Midnight Forge WebApp - A React application for managing Midnight Forge contracts
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+
+console.log('🔧 Environment NODE_ENV:', process.env.NODE_ENV);
+console.log('🔧 Starting Midnight Forge WebApp...');
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
