@@ -10,6 +10,7 @@ import type { WalletState } from '@midnight-ntwrk/wallet-api';
 
 const SimpleWalletConnection: React.FC = () => {
   // const [walletState, setWalletState] = useState<WalletState>({ status: 'disconnected' });
+  const [isReconnecting, setIsReconnecting] = useState(false);
 
   // set the wallet context
   const {setWallet, isWalletConnected, walletState, setWalletState, walletConnectionStatus, setWalletConnectionStatus} = useWalletContext();
@@ -19,6 +20,15 @@ const SimpleWalletConnection: React.FC = () => {
     console.log('Is Wallet Connected:', isWalletConnected);
     console.log('Get wallet state:', walletState);
   }, [walletConnectionStatus, isWalletConnected, walletState]);
+
+  // Detect reconnection attempts
+  useEffect(() => {
+    if (walletConnectionStatus === 'connecting' && walletState?.address) {
+      setIsReconnecting(true);
+    } else {
+      setIsReconnecting(false);
+    }
+  }, [walletConnectionStatus, walletState]);
 
   const connectWallet = async () => {
     setWalletConnectionStatus('connecting');
@@ -158,7 +168,7 @@ const SimpleWalletConnection: React.FC = () => {
                justifyContent: 'center',
                gap: '12px'
              }}>
-               ⏳ Connecting...
+               {isReconnecting ? '🔄 Reconnecting...' : '⏳ Connecting...'}
              </h3>
              <p style={{ 
                color: '#444', 
@@ -166,7 +176,10 @@ const SimpleWalletConnection: React.FC = () => {
                lineHeight: '1.5',
                margin: '8px 0' 
              }}>
-               Please check your Midnight Lace wallet extension.
+               {isReconnecting 
+                 ? 'Restoring your previous wallet connection...' 
+                 : 'Please check your Midnight Lace wallet extension.'
+               }
              </p>
              <style>
                {`
