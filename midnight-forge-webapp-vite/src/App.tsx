@@ -57,7 +57,10 @@ function App() {
 
   return (
     <div className="App">
+      {/* Floating wallet status indicator */}
       <WalletConnection />
+      
+      {/* Main workflow content */}
       <WorkflowNavigation
         steps={steps}
         currentStep={currentStep}

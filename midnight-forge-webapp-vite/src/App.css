@@ -1,13 +1,73 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+  background: var(--midnight-primary);
+}
+
+:root {
+  --midnight-primary: #1a0b2e;
+  --midnight-secondary: #16213e;
+  --midnight-accent: #7209b7;
+  --midnight-purple: #4c1d95;
+  --midnight-blue: #312e81;
+  --midnight-surface: #0f172a;
+  --midnight-card: #1e293b;
+  --midnight-border: #374151;
+  --midnight-text: #f8fafc;
+  --midnight-text-secondary: #cbd5e1;
+  --midnight-text-muted: #94a3b8;
+  --midnight-success: #10b981;
+  --midnight-warning: #f59e0b;
+  --midnight-error: #ef4444;
+  --midnight-gradient: linear-gradient(135deg, #7209b7 0%, #4c1d95 50%, #312e81 100%);
+  --midnight-gradient-dark: linear-gradient(135deg, #1a0b2e 0%, #16213e 50%, #0f172a 100%);
+}
+
 #root {
-  max-width: 100vw;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 0;
   min-height: 100vh;
+  background: var(--midnight-primary);
+  color: var(--midnight-text);
 }
 
 .App {
+  width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--midnight-gradient-dark);
+  position: relative;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.App::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(114, 9, 183, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(76, 29, 149, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(49, 46, 129, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.App > * {
+  position: relative;
+  z-index: 1;
 }
 
 .logo {
@@ -17,10 +77,10 @@
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em #7209b7aa);
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em #4c1d95aa);
 }
 
 @keyframes logo-spin {
@@ -40,8 +100,29 @@
 
 .card {
   padding: 2em;
+  background: var(--midnight-card);
+  border: 1px solid var(--midnight-border);
+  border-radius: 12px;
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--midnight-text-muted);
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--midnight-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--midnight-accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--midnight-purple);
 }
