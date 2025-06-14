@@ -22,17 +22,12 @@ import {
 } from '@midnight-ntwrk/dapp-connector-api';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
-import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import {
   type BalancedTransaction,
-  type UnbalancedTransaction,
-  createBalancedTx,
   type WalletProvider,
 } from '@midnight-ntwrk/midnight-js-types';
-import { type CoinInfo, type TransactionId } from '@midnight-ntwrk/ledger';
-import * as Ledger from '@midnight-ntwrk/ledger';
-import * as Zswap from '@midnight-ntwrk/zswap';
+import { type TransactionId } from '@midnight-ntwrk/ledger';
 import semver from 'semver';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 
@@ -156,6 +151,10 @@ export class BrowserWalletManager implements WalletAPIProvider {
   private async initializeProviders(connection: WalletConnected): Promise<WalletProviders> {
     const { wallet, uris } = connection;
 
+    // Dynamic import works around webpack's static analysis
+    const { httpClientProofProvider } = await import('@midnight-ntwrk/midnight-js-http-client-proof-provider');
+    console.log('🔧 🔑 httpClientProofProvider:', httpClientProofProvider);
+
     return {
       privateStateProvider: levelPrivateStateProvider({
         privateStateStoreName: 'midnight-forge-private-state',
@@ -166,16 +165,16 @@ export class BrowserWalletManager implements WalletAPIProvider {
       walletProvider: {
         coinPublicKey: connection.walletState.coinPublicKey,
         encryptionPublicKey: connection.walletState.encryptionPublicKey,
-        balanceTx(tx: UnbalancedTransaction, newCoins: CoinInfo[]): Promise<BalancedTransaction> {
-          return wallet
-            .balanceTransaction(
-              Zswap.Transaction.deserialize(tx.serialize(getLedgerNetworkId()), getZswapNetworkId()),
-              newCoins,
-            )
-            .then((tx) => wallet.proveTransaction(tx))
-            .then((zswapTx) => Ledger.Transaction.deserialize(zswapTx.serialize(getZswapNetworkId()), getLedgerNetworkId()))
-            .then(createBalancedTx);
-        },
+    //     balanceTx(tx: UnbalancedTransaction, newCoins: CoinInfo[]): Promise<BalancedTransaction> {
+    //         return wallet
+    //           .balanceTransaction(
+    //             ZswapTransaction.deserialize(tx.serialize(getLedgerNetworkId()), getZswapNetworkId()),
+    //             newCoins,
+    //           )
+    //           .then((tx) => wallet.proveTransaction(tx))
+    //           .then((zswapTx) => ZswapTransaction.deserialize(zswapTx.serialize(getZswapNetworkId()), getLedgerNetworkId()))
+    //           .then(createBalancedTx);
+    //       },
       } as WalletProvider,
       midnightProvider: {
         submitTx(tx: BalancedTransaction): Promise<TransactionId> {

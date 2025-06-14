@@ -7,16 +7,28 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import pino from 'pino';
+import { WalletProvider } from './contexts/WalletContext';
 
 console.log('🔧 Environment NODE_ENV:', process.env.NODE_ENV);
 console.log('🔧 Starting Midnight Forge WebApp...');
+
+// Create logger
+const logger = pino({
+  level: process.env.REACT_APP_LOGGING_LEVEL || 'info',
+});
+
+// Log the logger
+logger.info('🔧 Logger initialized');
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <WalletProvider logger={logger}>
+      <App />
+    </WalletProvider>
   </React.StrictMode>
 );
 

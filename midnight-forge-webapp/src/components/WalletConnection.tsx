@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useWalletContext } from '../hooks/useWalletContext';
 
 interface WalletState {
   status: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -8,6 +9,33 @@ interface WalletState {
 
 const SimpleWalletConnection: React.FC = () => {
   const [walletState, setWalletState] = useState<WalletState>({ status: 'disconnected' });
+
+  // set the wallet context
+  const {setWallet, setWalletProviders, walletProviders, isWalletConnected, walletAddress} = useWalletContext();
+
+//   useEffect(() => {
+//     if (isWalletConnected) {
+      
+      
+//       // When connected, save the wallet and providers to context
+//       if (walletProviders.status === 'connected') {
+//         try {
+//           setWallet(walletProviders.wallet);
+//           const providers = await walletProviders.getProviders();
+//           setWalletProviders(providers);
+//           console.log('💾 Wallet saved to context!', { wallet: conn.wallet, providers });
+//         } catch (error) {
+//           console.error('Failed to get providers:', error);
+//         }
+//       } else {
+//         // Clear wallet from context when disconnected
+//         setWallet(null);
+//         setWalletProviders(null);
+//       }
+//     });
+    
+//     return () => subscription.unsubscribe();
+//   }, [walletManager, setWallet, setWalletProviders]);
 
   const connectWallet = async () => {
     setWalletState({ status: 'connecting' });
@@ -33,6 +61,14 @@ const SimpleWalletConnection: React.FC = () => {
       // Get wallet state
       const state = await wallet.state();
       console.log('Wallet state:', state);
+      setWallet(wallet);
+
+      const serviceUriConfig = await connector.serviceUriConfig();
+      console.log('Service URI config:', serviceUriConfig);
+
+      // set the wallet context
+      // const providers = walletProviders;
+      // console.log('Providers:', providers);
 
       setWalletState({
         status: 'connected',
