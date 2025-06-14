@@ -20,9 +20,9 @@ import {
   type DAppConnectorWalletAPI,
   type ServiceUriConfig,
 } from '@midnight-ntwrk/dapp-connector-api';
-// import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
-// import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
-// import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
+import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
+import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
+import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import {
   type BalancedTransaction,
   type WalletProvider,

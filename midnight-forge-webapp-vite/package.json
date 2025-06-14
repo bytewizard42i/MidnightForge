@@ -11,8 +11,14 @@
   },
   "dependencies": {
     "@midnight-ntwrk/dapp-connector-api": "^3.0.0",
+    "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "^2.0.2",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "^2.0.2",
+    "@midnight-ntwrk/midnight-js-level-private-state-provider": "^2.0.2",
+    "@midnight-ntwrk/onchain-runtime": "^0.3.0",
+    "@originjs/vite-plugin-commonjs": "^1.0.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "vite-plugin-top-level-await": "^1.5.0",
     "vite-plugin-wasm": "^3.4.1"
   },
   "devDependencies": {
