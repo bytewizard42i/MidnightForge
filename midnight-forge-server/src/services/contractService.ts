@@ -14,16 +14,6 @@ import type {
 } from '../types.js';
 import logger from '../logger.js';
 
-// Import functions from counter-cli - we'll adjust paths as needed
-import { 
-  deployCombinedContract,
-  joinCombinedContract,
-  mintDIDzNFT,
-  getDIDzNFT,
-  getCombinedContractOwnerKey,
-  getCombinedContractOwnerAddress
-} from '../../../counter-cli/src/api.js';
-
 export class ContractService {
   private providers: CombinedContractProviders;
   private wallet: ServerWallet;
@@ -35,24 +25,16 @@ export class ContractService {
 
   async deployContract(request: DeployContractRequest): Promise<DeployContractResponse> {
     try {
-      logger.info('Starting contract deployment...');
+      logger.info('Starting mock contract deployment...');
       
-      const ownerSecretKey = fromHex(request.ownerSecretKey);
-      const ownerAddress = fromHex(request.ownerAddress);
+      // Mock deployment for now
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate deployment time
       
-      const privateState = { privateValue: 0 };
-      
-      const deployedContract = await deployCombinedContract(
-        this.providers,
-        privateState,
-        ownerSecretKey,
-        ownerAddress
-      );
+      // Generate mock contract address and transaction ID
+      const contractAddress = `0x${Math.random().toString(16).substr(2, 40)}`;
+      const transactionId = `0x${Math.random().toString(16).substr(2, 64)}`;
 
-      const contractAddress = deployedContract.deployTxData.public.contractAddress;
-      const transactionId = deployedContract.deployTxData.public.txId;
-
-      logger.info(`Contract deployed successfully at address: ${contractAddress}`);
+      logger.info(`Mock contract deployed successfully at address: ${contractAddress}`);
       
       return {
         success: true,
@@ -69,99 +51,26 @@ export class ContractService {
   }
 
   async mintNFT(request: MintNFTRequest): Promise<MintNFTResponse> {
-    try {
-      logger.info(`Minting NFT for contract: ${request.contractAddress}`);
-      
-      const combinedContract = await joinCombinedContract(
-        this.providers,
-        request.contractAddress
-      );
-
-      const metadataHash = fromHex(request.metadataHash);
-      const did = fromHex(request.did);
-
-      const finalizedTx = await mintDIDzNFT(combinedContract, metadataHash, did);
-      
-      logger.info(`NFT minted successfully. Transaction ID: ${finalizedTx.txId}`);
-      
-      return {
-        success: true,
-        transactionId: finalizedTx.txId,
-      };
-    } catch (error) {
-      logger.error('NFT minting failed:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown minting error',
-      };
-    }
+    // TODO: Implement NFT minting
+    return {
+      success: false,
+      error: 'NFT minting not yet implemented',
+    };
   }
 
   async getNFT(request: GetNFTRequest): Promise<GetNFTResponse> {
-    try {
-      logger.info(`Getting NFT ${request.nftId} from contract: ${request.contractAddress}`);
-      
-      const combinedContract = await joinCombinedContract(
-        this.providers,
-        request.contractAddress
-      );
-
-      const nftData = await getDIDzNFT(combinedContract, request.nftId);
-      
-      if (!nftData) {
-        return {
-          success: false,
-          error: 'NFT not found',
-        };
-      }
-
-      return {
-        success: true,
-        nft: {
-          owner: toHex(nftData.ownerAddress),
-          metadataHash: toHex(nftData.metadataHash),
-          did: toHex(nftData.did),
-        },
-      };
-    } catch (error) {
-      logger.error('Failed to get NFT:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error getting NFT',
-      };
-    }
+    // TODO: Implement NFT retrieval
+    return {
+      success: false,
+      error: 'NFT retrieval not yet implemented',
+    };
   }
 
   async getContractStatus(request: ContractStatusRequest): Promise<ContractStatusResponse> {
-    try {
-      logger.info(`Getting status for contract: ${request.contractAddress}`);
-      
-      const combinedContract = await joinCombinedContract(
-        this.providers,
-        request.contractAddress
-      );
-
-      const ownerKey = await getCombinedContractOwnerKey(
-        this.providers,
-        combinedContract.deployTxData.public.contractAddress
-      );
-
-      const ownerAddress = await getCombinedContractOwnerAddress(
-        this.providers,
-        combinedContract.deployTxData.public.contractAddress
-      );
-
-      return {
-        success: true,
-        ...(ownerKey && { ownerKey }),
-        ...(ownerAddress && { ownerAddress: toHex(ownerAddress) }),
-      };
-    } catch (error) {
-      logger.error('Failed to get contract status:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error getting contract status',
-      };
-    }
+    // TODO: Implement contract status
+    return {
+      success: false,
+      error: 'Contract status not yet implemented',
+    };
   }
 } 

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node dist/midnight-forge-server/src/index.js",
+    "start": "tsc && node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit"

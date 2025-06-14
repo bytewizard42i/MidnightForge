@@ -71,6 +71,8 @@ export interface WalletProviders {
   publicDataProvider: any;
   walletProvider: WalletProvider;
   midnightProvider: MidnightProvider;
+  submitTx: (tx: BalancedTransaction) => Promise<TransactionId>;
+  sign: (tx: UnbalancedTransaction) => Promise<BalancedTransaction>;
 }
 
 /**
@@ -146,6 +148,9 @@ export class BrowserWalletManager implements WalletAPIProvider {
       },
       submitTx(tx: BalancedTransaction): Promise<TransactionId> {
         return wallet.submitTransaction(tx);
+      },
+      sign(tx: UnbalancedTransaction): Promise<BalancedTransaction> {
+        return wallet.signTransaction(tx, []);
       },
     };
 

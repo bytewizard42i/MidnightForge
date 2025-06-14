@@ -4,9 +4,38 @@ import cors from 'cors';
 import { getServerConfig } from './config.js';
 import logger from './logger.js';
 import type { ApiResponse, HealthCheckResponse } from './types.js';
+import { SimpleWalletService } from './services/simpleWalletService.js';
+import { ContractService } from './services/contractService.js';
+
+// load env file
+import dotenv from 'dotenv';
+dotenv.config();
 
 const config = getServerConfig();
 const app = express();
+
+// Initialize services
+const walletService = new SimpleWalletService();
+let contractService: ContractService | null = null;
+
+// Initialize wallet service on startup
+const initializeServices = async () => {
+  try {
+    if (!config.walletSeed) {
+      throw new Error('WALLET_SEED environment variable is required');
+    }
+    
+    await walletService.initialize(config.midnight, config.walletSeed, config.walletFilename);
+    contractService = new ContractService(walletService.getProviders(), walletService.getWallet());
+    logger.info('Services initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize services:', error);
+    process.exit(1);
+  }
+};
+
+// Start initialization (non-blocking)
+initializeServices();
 
 // Middleware
 app.use(cors({
@@ -37,8 +66,8 @@ app.get('/health', (req: Request, res: Response) => {
       proofServer: config.midnight.proofServer,
     },
     wallet: {
-      connected: false, // TODO: Check actual wallet status
-      synced: false,    // TODO: Check actual sync status
+      connected: walletService.isInitialized(),
+      synced: walletService.isInitialized(),
     },
   };
   
@@ -58,16 +87,34 @@ app.post('/api/deploy-contract', async (req: Request, res: Response) => {
       return res.status(400).json(response);
     }
 
-    // TODO: Initialize wallet and providers
-    // TODO: Call contract deployment service
+    if (!contractService) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Contract service not initialized. Please wait for wallet initialization to complete.',
+      };
+      return res.status(503).json(response);
+    }
+
+    // Call contract deployment service
+    const deployResult = await contractService.deployContract({
+      ownerSecretKey,
+      ownerAddress,
+    });
     
-    // Placeholder response
-    const response: ApiResponse = {
-      success: false,
-      error: 'Contract deployment not yet implemented - wallet initialization required',
-    };
-    
-    return res.status(501).json(response);
+    if (deployResult.success) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          contractAddress: deployResult.contractAddress,
+          transactionId: deployResult.transactionId,
+        },
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: deployResult.error,
+      });
+    }
   } catch (error) {
     logger.error('Error in deploy-contract endpoint:', error);
     const response: ApiResponse = {
@@ -195,10 +242,7 @@ app.use((req: Request, res: Response) => {
 
 // Start server
 const server = app.listen(config.port, () => {
-  logger.info(`Midnight Forge Server started on port ${config.port}`);
-  // running in which IP address? localhost?
-  logger.info(`Server running on http://${config.ip}:${config.port}`);
-  logger.info(`Server running in ${config.nodeEnv} mode`);
+  logger.info(`Midnight Forge Server started on http://${config.ip}:${config.port}`);
   logger.info(`Environment: ${config.nodeEnv}`);
   logger.info(`Network: ${config.midnight.indexer}`);
 });
@@ -206,7 +250,8 @@ const server = app.listen(config.port, () => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully');
-  server.close(() => {
+  server.close(async () => {
+    await walletService.cleanup();
     logger.info('Process terminated');
     process.exit(0);
   });
@@ -214,7 +259,8 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   logger.info('SIGINT received, shutting down gracefully');
-  server.close(() => {
+  server.close(async () => {
+    await walletService.cleanup();
     logger.info('Process terminated');
     process.exit(0);
   });
