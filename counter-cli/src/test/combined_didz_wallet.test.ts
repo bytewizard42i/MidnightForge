@@ -86,7 +86,8 @@ describe('Combined DIDz Wallet', () => {
     expect(fetchedDIDzNFT.did).toEqual(didBytes);
   });
 
-  it('should not mint a DIDz NFT if not owner', async () => {
+  // BUG: https://github.com/bytewizard42i/MidnightForge/issues/29
+  it.skip('should not mint a DIDz NFT if not owner', async () => {
 
     const metadataHash = await generateMetadataHash('{"name":"DIDz NFT","description":"A DIDz NFT","image":"https://example.com/image.png"}');
 

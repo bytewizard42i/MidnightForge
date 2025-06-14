@@ -1,8 +1,8 @@
 import type { Config, ServerConfig } from '../config.js';
-import type { CombinedContractProviders, ServerWallet } from '../types.js';
+import type { CombinedContractProviders } from '../types.js';
 import logger from '../logger.js';
 import { Resource, WalletBuilder } from '@midnight-ntwrk/wallet';
-import { getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { Wallet } from '@midnight-ntwrk/wallet-api';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
@@ -10,6 +10,9 @@ import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { combinedContractConfig } from '../config.js';
 import * as Rx from 'rxjs';
+import { Transaction } from '@midnight-ntwrk/ledger';
+import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
+import { createBalancedTx } from '@midnight-ntwrk/midnight-js-types';
 
 export class SimpleWalletService {
   private initialized = false;
@@ -51,15 +54,17 @@ export class SimpleWalletService {
     console.log('- networkId:', getZswapNetworkId());
     
     try {
-      const wallet = await WalletBuilder.build(
+      const wallet = await WalletBuilder.buildFromSeed(
         config.midnight.indexer,
         config.midnight.indexerWS,
         config.midnight.proofServer,
         config.midnight.node,
         actualSeed,
         getZswapNetworkId(),
-        'warn',
+        'info',
       );
+
+      console.log('Current networkId:', getZswapNetworkId());
       
       console.log('Wallet created successfully:', !!wallet);
       console.log('=== END DEBUG ===');
@@ -102,24 +107,24 @@ export class SimpleWalletService {
       console.log('proofProvider:', proofProvider);
       
       // Create ZK config providers for each circuit
-      const zkConfigProvider = new NodeZkConfigProvider('incrementCounter');
+      const zkConfigProvider = new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath);
       console.log('zkConfigProvider:', zkConfigProvider);
       
-      const mintDIDzNFTZkConfigProvider = new NodeZkConfigProvider('mintDIDzNFT');
+      const mintDIDzNFTZkConfigProvider = new NodeZkConfigProvider<'mintDIDzNFT'>(combinedContractConfig.zkConfigPath);
       console.log('mintDIDzNFTZkConfigProvider:', mintDIDzNFTZkConfigProvider);
-      const getDIDzNFTOwnerZkConfigProvider = new NodeZkConfigProvider('getDIDzNFTOwner');
+      const getDIDzNFTOwnerZkConfigProvider = new NodeZkConfigProvider<'getDIDzNFTOwner'>(combinedContractConfig.zkConfigPath);
       
-      const getDIDzNFTMetadataHashZkConfigProvider = new NodeZkConfigProvider('getDIDzNFTMetadataHash');
+      const getDIDzNFTMetadataHashZkConfigProvider = new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(combinedContractConfig.zkConfigPath);
       
-      const getOwnerKeyZkConfigProvider = new NodeZkConfigProvider('getOwnerKey');
+      const getOwnerKeyZkConfigProvider = new NodeZkConfigProvider<'getOwnerKey'>(combinedContractConfig.zkConfigPath);
       
-      const incrementCounterZkConfigProvider = new NodeZkConfigProvider('incrementCounter');
+      const incrementCounterZkConfigProvider = new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath);
       
-      const getCounterZkConfigProvider = new NodeZkConfigProvider('getCounter');
+      const getCounterZkConfigProvider = new NodeZkConfigProvider<'getCounter'>(combinedContractConfig.zkConfigPath);
       
-      const getOwnerAddressZkConfigProvider = new NodeZkConfigProvider('getOwnerAddress');
+      const getOwnerAddressZkConfigProvider = new NodeZkConfigProvider<'getOwnerAddress'>(combinedContractConfig.zkConfigPath);
       
-      const getDIDzNFTFromIdZkConfigProvider = new NodeZkConfigProvider('getDIDzNFTFromId');
+      const getDIDzNFTFromIdZkConfigProvider = new NodeZkConfigProvider<'getDIDzNFTFromId'>(combinedContractConfig.zkConfigPath);
 
       console.log('getDIDzNFTFromIdZkConfigProvider:', getDIDzNFTFromIdZkConfigProvider);
       // Get wallet state for provider creation
@@ -137,12 +142,14 @@ export class SimpleWalletService {
           coinPublicKey: walletState.coinPublicKey,
           encryptionPublicKey: walletState.encryptionPublicKey,
           balanceTx: async (tx: any, newCoins: any) => {
-            const result = await this.wallet!.balanceTransaction(tx, newCoins);
-            // Handle the case where balanceTransaction returns NothingToProve
-            if (result.type === 'NothingToProve') {
-              throw new Error('Nothing to prove - transaction may already be balanced');
-            }
-            return await this.wallet!.proveTransaction(result);
+            return this.wallet!
+              .balanceTransaction(
+                ZswapTransaction.deserialize(tx.serialize(getLedgerNetworkId()), getZswapNetworkId()),
+                newCoins,
+              )
+              .then((tx) => this.wallet!.proveTransaction(tx))
+              .then((zswapTx) => Transaction.deserialize(zswapTx.serialize(getZswapNetworkId()), getLedgerNetworkId()))
+              .then(createBalancedTx);
           },
         },
         midnightProvider: {

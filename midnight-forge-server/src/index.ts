@@ -3,13 +3,28 @@ import express from 'express';
 import cors from 'cors';
 import { getServerConfig, ServerConfig } from './config.js';
 import logger from './logger.js';
-import type { ApiResponse, CombinedContractProviders, HealthCheckResponse } from './types.js';
+import { CombinedContractContract, CombinedContractPrivateStateId, DeployContractRequest, type ApiResponse, type CombinedContractProviders, type HealthCheckResponse } from './types.js';
 import { SimpleWalletService } from './services/simpleWalletService.js';
 import { ContractService } from './services/contractService.js';
 import * as Rx from 'rxjs';
 
+
+import {
+  CombinedContract,
+  CombinedContractPrivateState,
+  Counter,
+  type CounterPrivateState,
+  witnesses,
+} from '@midnight-forge/protocol-did-contract';
+
 // load env file
 import dotenv from 'dotenv';
+import { Wallet } from '@midnight-ntwrk/wallet-api';
+import { Resource } from '@midnight-ntwrk/wallet';
+import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
+import { randomBytes } from 'crypto';
+
 dotenv.config();
 
 let config: ServerConfig = getServerConfig();
@@ -18,6 +33,7 @@ const app = express();
 // Initialize services
 const walletService = new SimpleWalletService();
 let contractService: ContractService | null = null;
+let wallet: Wallet & Resource | null = null;
 
 // Initialize wallet service on startup
 const initializeServices = async () => {
@@ -30,7 +46,8 @@ const initializeServices = async () => {
     
     await walletService.initialize(config.midnight, config.walletSeed, config.walletFilename);
     
-    const wallet = await walletService.getWalletFromSeed(config);
+    wallet = await walletService.getWalletFromSeed(config);
+
     // console.log('Wallet object created:', !!wallet);
     // console.log('Wallet methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(wallet)));
 
@@ -109,10 +126,12 @@ app.get('/health', (req: Request, res: Response) => {
   res.json(healthResponse);
 });
 
+export const combinedContractInstance: CombinedContractContract = new CombinedContract.Contract(witnesses);
+
 // Contract deployment endpoint
 app.post('/api/deploy-contract', async (req: Request, res: Response) => {
   try {
-    const { ownerSecretKey, ownerAddress } = req.body;
+    const { ownerSecretKey, ownerAddress } : DeployContractRequest = req.body;
     
     if (!ownerSecretKey || !ownerAddress) {
       const response: ApiResponse = {
@@ -130,26 +149,42 @@ app.post('/api/deploy-contract', async (req: Request, res: Response) => {
       return res.status(503).json(response);
     }
 
+    if (!wallet) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Wallet not initialized. Please wait for wallet initialization to complete.',
+      };
+      return res.status(503).json(response);
+    }
+
+
+    
     // Call contract deployment service
-    const deployResult = await contractService.deployContract({
-      ownerSecretKey,
-      ownerAddress,
+    logger.info('Deploying counter contract...');
+    
+    const ownerSecretKeyBytes = fromHex("55ddac2bd7414e6ca90dcf42126b2d97cd4ddd72231bea50bbcffbfa826d8f0e");
+    const ownerAddressBytes = randomBytes(32);
+    
+    // Verify they're exactly 32 bytes
+    if (ownerSecretKeyBytes.length !== 32) throw new Error(`Secret key must be 32 bytes, got ${ownerSecretKeyBytes.length}`);
+    if (ownerAddressBytes.length !== 32) throw new Error(`Address must be 32 bytes, got ${ownerAddressBytes.length}`);
+    
+    const counterContract = await deployContract(contractService.getProviders(), {
+      contract: combinedContractInstance,
+      privateStateId: CombinedContractPrivateStateId,
+      initialPrivateState: { privateValue: 0 },
+      args: [ownerSecretKeyBytes, ownerAddressBytes],
     });
     
-    if (deployResult.success) {
-      return res.status(200).json({
-        success: true,
-        data: {
-          contractAddress: deployResult.contractAddress,
-          transactionId: deployResult.transactionId,
-        },
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        error: deployResult.error,
-      });
-    }
+    logger.info(`Deployed contract at address: ${counterContract.deployTxData.public.contractAddress}`);
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        contractAddress: counterContract.deployTxData.public.contractAddress,
+        message: 'Contract deployed successfully',
+      },
+    });
   } catch (error) {
     logger.error('Error in deploy-contract endpoint:', error);
     const response: ApiResponse = {

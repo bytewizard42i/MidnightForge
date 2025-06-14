@@ -1,5 +1,5 @@
 import React, { type PropsWithChildren, createContext, useState, useCallback, useMemo, useEffect } from 'react';
-import { type WalletProviders, BrowserWalletManager } from './WalletManager';
+// import { type WalletProviders, /*BrowserWalletManager*/ } from './WalletManager';
 import { type Logger } from 'pino';
 import { type DAppConnectorWalletAPI } from '@midnight-ntwrk/dapp-connector-api';
 import type { WalletState } from '@midnight-ntwrk/wallet-api';
@@ -21,12 +21,12 @@ export interface WalletContextType {
   // walletManager: WalletAPIProvider;
   
   // Direct access to wallet instance for transactions
-  wallet: DAppConnectorWalletAPI | null;
-  walletProviders: WalletProviders | null;
+  // wallet: DAppConnectorWalletAPI | null;
+  // walletProviders: WalletProviders | null;
   
   // Setters to save wallet when connected
   setWallet: (wallet: DAppConnectorWalletAPI | null) => void;
-  setWalletProviders: (providers: WalletProviders | null) => void;
+  // setWalletProviders: (providers: WalletProviders | null) => void;
 
   // Convenience methods
   isWalletConnected: boolean;
@@ -49,15 +49,15 @@ export type WalletProviderProps = PropsWithChildren<{
 
 export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger, children }) => {
   // Create persistent wallet manager
-  const walletManager = useMemo(() => {
-    // console.log('🔧 Creating new BrowserWalletManager instance');
-    logger.info('🔧 Creating new BrowserWalletManager instance');
-    return new BrowserWalletManager(logger);
-  }, [logger]);
+  // const walletManager = useMemo(() => {
+  //   // console.log('🔧 Creating new BrowserWalletManager instance');
+  //   logger.info('🔧 Creating new BrowserWalletManager instance');
+  //   return new BrowserWalletManager(logger);
+  // }, [logger]);
 
   // Initialize state from localStorage
   const [wallet, setWallet] = useState<DAppConnectorWalletAPI | null>(null);
-  const [walletProviders, setWalletProviders] = useState<WalletProviders | null>(null);
+  // const [walletProviders, setWalletProviders] = useState<WalletProviders | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(() => {
     try {
       return localStorage.getItem(WALLET_STORAGE_KEYS.WALLET_ADDRESS);
@@ -180,23 +180,23 @@ export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger
   }, []); // Empty dependency array - only run once on mount
 
   // Enhanced setters that also update related state
-  const handleSetWallet = useCallback((newWallet: DAppConnectorWalletAPI | null) => {
-    setWallet(newWallet);
-    if (!newWallet) {
-      setWalletAddress(null);
-      setWalletProviders(null);
-      setWalletState(null);
-      setWalletConnectionStatus('disconnected');
-    }
-  }, []);
+  // const handleSetWallet = useCallback((newWallet: DAppConnectorWalletAPI | null) => {
+  //   setWallet(newWallet);
+  //   if (!newWallet) {
+  //     setWalletAddress(null);
+  //     setWalletProviders(null);
+  //     setWalletState(null);
+  //     setWalletConnectionStatus('disconnected');
+  //   }
+  // }, []);
 
-  const handleSetWalletProviders = useCallback((providers: WalletProviders | null) => {
-    setWalletProviders(providers);
-    if (providers && wallet) {
-      // Extract address from providers if available
-      setWalletAddress(providers.walletProvider.coinPublicKey || null);
-    }
-  }, [wallet]);
+  // const handleSetWalletProviders = useCallback((providers: WalletProviders | null) => {
+  //   setWalletProviders(providers);
+  //   if (providers && wallet) {
+  //     // Extract address from providers if available
+  //     setWalletAddress(providers.walletProvider.coinPublicKey || null);
+  //   }
+  // }, [wallet]);
 
   // Enhanced setters that clear localStorage when disconnecting
   const handleSetWalletState = useCallback((state: WalletState | null) => {
@@ -214,7 +214,7 @@ export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger
     // Clear all wallet data when disconnecting
     if (status === 'disconnected') {
       setWallet(null);
-      setWalletProviders(null);
+      // setWalletProviders(null);
       setWalletState(null);
       setWalletAddress(null);
       
@@ -232,18 +232,18 @@ export const WalletProvider: React.FC<Readonly<WalletProviderProps>> = ({ logger
   const isWalletConnected = walletConnectionStatus === 'connected';
 
   const contextValue: WalletContextType = useMemo(() => ({
-    walletManager,
+    // walletManager,
     wallet,
-    walletProviders,
-    setWallet: handleSetWallet,
-    setWalletProviders: handleSetWalletProviders,
+    // walletProviders,
+    setWallet: setWallet,
+    // setWalletProviders: handleSetWalletProviders,
     isWalletConnected,
     walletAddress,
     walletState,
     setWalletState: handleSetWalletState,
     walletConnectionStatus,
     setWalletConnectionStatus: handleSetWalletConnectionStatus,
-  }), [walletManager, wallet, walletProviders, handleSetWallet, handleSetWalletProviders, isWalletConnected, walletAddress, walletState, handleSetWalletState, walletConnectionStatus, handleSetWalletConnectionStatus]);
+  }), [wallet, /*walletProviders, handleSetWallet, handleSetWalletProviders,*/ isWalletConnected, walletAddress, walletState, handleSetWalletState, walletConnectionStatus, handleSetWalletConnectionStatus]);
 
   return (
     <WalletContext.Provider value={contextValue}>

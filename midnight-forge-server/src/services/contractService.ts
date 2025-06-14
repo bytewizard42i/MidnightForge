@@ -1,4 +1,4 @@
-import { toHex, fromHex } from '@midnight-ntwrk/midnight-js-utils';
+import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
 import type { 
   DeployContractRequest, 
   DeployContractResponse, 
@@ -8,10 +8,7 @@ import type {
   GetNFTResponse,
   ContractStatusRequest,
   ContractStatusResponse,
-  CombinedContractProviders,
-  ServerWallet,
-  DeployedCombinedContractContract
-} from '../types.js';
+  CombinedContractProviders} from '../types.js';
 import logger from '../logger.js';
 import { Resource } from '@midnight-ntwrk/wallet';
 import { Wallet } from '@midnight-ntwrk/wallet-api';
@@ -41,7 +38,17 @@ export class ContractService {
   async deployContract(request: DeployContractRequest): Promise<DeployContractResponse> {
     try {
       logger.info('Starting mock contract deployment...');
-      
+
+      const secretKey = fromHex(request.ownerSecretKey);
+      const ownerAddress = request.ownerAddress;
+
+      console.log('Secret key:', secretKey);
+      console.log('Owner address:', ownerAddress);
+
+      // const deployResult = await this.providers.mintDIDzNFTZkConfigProvider.deployContract(secretKey, ownerAddress);
+
+      // console.log('Deploy result:', deployResult);
+
       // Mock deployment for now
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate deployment time
       
