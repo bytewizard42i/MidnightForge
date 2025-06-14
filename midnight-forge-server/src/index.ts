@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { getServerConfig, ServerConfig } from './config.js';
 import logger from './logger.js';
-import type { ApiResponse, HealthCheckResponse } from './types.js';
+import type { ApiResponse, CombinedContractProviders, HealthCheckResponse } from './types.js';
 import { SimpleWalletService } from './services/simpleWalletService.js';
 import { ContractService } from './services/contractService.js';
 import * as Rx from 'rxjs';
@@ -35,13 +35,20 @@ const initializeServices = async () => {
     // console.log('Wallet methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(wallet)));
 
     const state = await Rx.firstValueFrom(wallet.state());
-    // console.log('Raw wallet state:', state);
-    // console.log('State type:', typeof state);
-    // console.log('State keys:', state ? Object.keys(state) : 'null/undefined');
-    logger.info('Wallet state:', state);
+    console.log('Raw wallet state:', state);
+    console.log('State type:', typeof state);
+    console.log('State keys:', state ? Object.keys(state) : 'null/undefined');
 
-    // console.log('After getWalletFromSeed - wallet:', await wallet.state().toPromise());
-    contractService = new ContractService(walletService.getProviders(), wallet);
+    // Get providers and initialize contract service
+    console.log('=== DEBUG ContractService Initialization ===');
+    const providers = walletService.getProviders();
+    console.log('Providers from walletService:', providers);
+    console.log('Providers type:', typeof providers);
+    console.log('Providers keys:', providers ? Object.keys(providers) : 'null/undefined');
+    
+    contractService = new ContractService(providers, wallet);
+    console.log('ContractService created:', !!contractService);
+    console.log('=== END ContractService DEBUG ===');
 
     // expect(this.wallet).not.toBeNull();
 
@@ -92,6 +99,10 @@ app.get('/health', (req: Request, res: Response) => {
     wallet: {
       connected: walletService.isInitialized(),
       synced: walletService.isInitialized(),
+    },
+    contractService: {
+      initialized: !!contractService,
+      providers: contractService ? contractService.getProviders() : {} as CombinedContractProviders,
     },
   };
   

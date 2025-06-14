@@ -105,4 +105,8 @@ export interface HealthCheckResponse {
     connected: boolean;
     synced: boolean;
   };
+  contractService: {
+    initialized: boolean;
+    providers: CombinedContractProviders;
+  };
 } 

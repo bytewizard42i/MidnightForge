@@ -21,8 +21,21 @@ export class ContractService {
   private wallet: Wallet & Resource;
 
   constructor(providers: CombinedContractProviders, wallet: Wallet & Resource) {
+    console.log('=== ContractService Constructor ===');
+    console.log('Received providers:', providers);
+    console.log('Providers type:', typeof providers);
+    console.log('Received wallet:', !!wallet);
+    console.log('Wallet methods:', wallet ? Object.getOwnPropertyNames(Object.getPrototypeOf(wallet)) : 'no wallet');
+    
     this.providers = providers;
     this.wallet = wallet;
+    
+    console.log('ContractService initialized successfully');
+    console.log('=== End ContractService Constructor ===');
+  }
+
+  getProviders(): CombinedContractProviders {
+    return this.providers;
   }
 
   async deployContract(request: DeployContractRequest): Promise<DeployContractResponse> {
