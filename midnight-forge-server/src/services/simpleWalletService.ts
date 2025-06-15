@@ -39,19 +39,19 @@ export class SimpleWalletService {
   }
 
   async getWalletFromSeed(config: ServerConfig): Promise<Wallet & Resource> {
-    console.log('=== DEBUG getWalletFromSeed ===');
-    console.log('config.walletSeed:', JSON.stringify(config?.walletSeed));
-    console.log('config.walletSeed length:', config?.walletSeed?.length);
+    // console.log('=== DEBUG getWalletFromSeed ===');
+    // console.log('config.walletSeed:', JSON.stringify(config?.walletSeed));
+    // console.log('config.walletSeed length:', config?.walletSeed?.length);
     
     const actualSeed = config.walletSeed;
-    console.log('actualSeed:', JSON.stringify(actualSeed));
+    // console.log('actualSeed:', JSON.stringify(actualSeed));
     
-    console.log('Building wallet with:');
-    console.log('- indexer:', config.midnight.indexer);
-    console.log('- indexerWS:', config.midnight.indexerWS);
-    console.log('- proofServer:', config.midnight.proofServer);
-    console.log('- node:', config.midnight.node);
-    console.log('- networkId:', getZswapNetworkId());
+    // console.log('Building wallet with:');
+    // console.log('- indexer:', config.midnight.indexer);
+    // console.log('- indexerWS:', config.midnight.indexerWS);
+    // console.log('- proofServer:', config.midnight.proofServer);
+    // console.log('- node:', config.midnight.node);
+    // console.log('- networkId:', getZswapNetworkId());
     
     try {
       const wallet = await WalletBuilder.buildFromSeed(
@@ -95,23 +95,23 @@ export class SimpleWalletService {
         privateStateStoreName: combinedContractConfig.privateStateStoreName,
       });
 
-      console.log('privateStateProvider:', privateStateProvider);
+      // console.log('privateStateProvider:', privateStateProvider);
       
       const publicDataProvider = indexerPublicDataProvider(
         config.midnight.indexer,
         config.midnight.indexerWS
       );
-      console.log('publicDataProvider:', publicDataProvider);
+      // console.log('publicDataProvider:', publicDataProvider);
       
       const proofProvider = httpClientProofProvider(config.midnight.proofServer);
-      console.log('proofProvider:', proofProvider);
+      // console.log('proofProvider:', proofProvider);
       
       // Create ZK config providers for each circuit
       const zkConfigProvider = new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath);
-      console.log('zkConfigProvider:', zkConfigProvider);
+      // console.log('zkConfigProvider:', zkConfigProvider);
       
       const mintDIDzNFTZkConfigProvider = new NodeZkConfigProvider<'mintDIDzNFT'>(combinedContractConfig.zkConfigPath);
-      console.log('mintDIDzNFTZkConfigProvider:', mintDIDzNFTZkConfigProvider);
+      // console.log('mintDIDzNFTZkConfigProvider:', mintDIDzNFTZkConfigProvider);
       const getDIDzNFTOwnerZkConfigProvider = new NodeZkConfigProvider<'getDIDzNFTOwner'>(combinedContractConfig.zkConfigPath);
       
       const getDIDzNFTMetadataHashZkConfigProvider = new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(combinedContractConfig.zkConfigPath);
@@ -126,7 +126,7 @@ export class SimpleWalletService {
       
       const getDIDzNFTFromIdZkConfigProvider = new NodeZkConfigProvider<'getDIDzNFTFromId'>(combinedContractConfig.zkConfigPath);
 
-      console.log('getDIDzNFTFromIdZkConfigProvider:', getDIDzNFTFromIdZkConfigProvider);
+      // console.log('getDIDzNFTFromIdZkConfigProvider:', getDIDzNFTFromIdZkConfigProvider);
       // Get wallet state for provider creation
       const walletState = await Rx.firstValueFrom(this.wallet.state());
       console.log('walletState:', walletState);

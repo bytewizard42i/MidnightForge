@@ -3,17 +3,36 @@ import { combinedContractConfig, Config, ServerConfig } from "./config";
 import { Wallet } from "@midnight-ntwrk/wallet-api";
 import * as fs from "node:fs";
 import { WalletBuilder } from "@midnight-ntwrk/wallet";
-import { CoinInfo, nativeToken, Transaction, TransactionId } from "@midnight-ntwrk/ledger";
-import { getLedgerNetworkId, getZswapNetworkId } from "@midnight-ntwrk/midnight-js-network-id";
+import {
+    CoinInfo,
+    nativeToken,
+    NetworkId,
+    Transaction,
+    TransactionId,
+} from "@midnight-ntwrk/ledger";
+import {
+    getLedgerNetworkId,
+    getZswapNetworkId,
+} from "@midnight-ntwrk/midnight-js-network-id";
 import * as Rx from "rxjs";
 import { webcrypto } from "node:crypto";
-import { WalletProvider, MidnightProvider, UnbalancedTransaction, BalancedTransaction, createBalancedTx } from "@midnight-ntwrk/midnight-js-types";
-import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
+import {
+    WalletProvider,
+    MidnightProvider,
+    UnbalancedTransaction,
+    BalancedTransaction,
+    createBalancedTx,
+} from "@midnight-ntwrk/midnight-js-types";
+import { Transaction as ZswapTransaction } from "@midnight-ntwrk/zswap";
 import { httpClientProofProvider } from "@midnight-ntwrk/midnight-js-http-client-proof-provider";
 import { indexerPublicDataProvider } from "@midnight-ntwrk/midnight-js-indexer-public-data-provider";
 import { levelPrivateStateProvider } from "@midnight-ntwrk/midnight-js-level-private-state-provider";
 import { NodeZkConfigProvider } from "@midnight-ntwrk/midnight-js-node-zk-config-provider";
-import { CombinedContractProviders, CombinedContractPrivateStateId } from "./types";
+import {
+    CombinedContractProviders,
+    CombinedContractPrivateStateId,
+} from "./types";
+import { toHex } from "@midnight-ntwrk/midnight-js-utils";
 
 export const streamToString = async (
     stream: fs.ReadStream
@@ -263,59 +282,121 @@ export const randomBytes = (length: number): Uint8Array => {
     const bytes = new Uint8Array(length);
     webcrypto.getRandomValues(bytes);
     return bytes;
-  };
+};
 
-export const buildFreshWallet = async (config: ServerConfig): Promise<Wallet & Resource> => {
-
-    console.info('Building fresh wallet with config: ', config);
-    const wallet = await buildWalletAndWaitForFunds(config.midnight, config.walletSeed, config.walletFilename);
+export const buildFreshWallet = async (
+    config: ServerConfig
+): Promise<Wallet & Resource> => {
+    console.info("Building fresh wallet with config: ", config);
+    const wallet = await buildWalletAndWaitForFunds(
+        config.midnight,
+        config.walletSeed,
+        config.walletFilename
+    );
     return wallet;
-}
+};
 
-export const createWalletAndMidnightProvider = async (wallet: Wallet): Promise<WalletProvider & MidnightProvider> => {
+export const createWalletAndMidnightProvider = async (
+    wallet: Wallet
+): Promise<WalletProvider & MidnightProvider> => {
     const state = await Rx.firstValueFrom(wallet.state());
     return {
-      coinPublicKey: state.coinPublicKey,
-      encryptionPublicKey: state.encryptionPublicKey,
-      balanceTx(tx: UnbalancedTransaction, newCoins: CoinInfo[]): Promise<BalancedTransaction> {
-        return wallet
-          .balanceTransaction(
-            ZswapTransaction.deserialize(tx.serialize(getLedgerNetworkId()), getZswapNetworkId()),
-            newCoins,
-          )
-          .then((tx) => wallet.proveTransaction(tx))
-          .then((zswapTx) => Transaction.deserialize(zswapTx.serialize(getZswapNetworkId()), getLedgerNetworkId()))
-          .then(createBalancedTx);
-      },
-      submitTx(tx: BalancedTransaction): Promise<TransactionId> {
-        return wallet.submitTransaction(tx);
-      },
+        coinPublicKey: state.coinPublicKey,
+        encryptionPublicKey: state.encryptionPublicKey,
+        balanceTx(
+            tx: UnbalancedTransaction,
+            newCoins: CoinInfo[]
+        ): Promise<BalancedTransaction> {
+            return wallet
+                .balanceTransaction(
+                    ZswapTransaction.deserialize(
+                        tx.serialize(getLedgerNetworkId()),
+                        getZswapNetworkId()
+                    ),
+                    newCoins
+                )
+                .then((tx) => wallet.proveTransaction(tx))
+                .then((zswapTx) =>
+                    Transaction.deserialize(
+                        zswapTx.serialize(getZswapNetworkId()),
+                        getLedgerNetworkId()
+                    )
+                )
+                .then(createBalancedTx);
+        },
+        submitTx(tx: BalancedTransaction): Promise<TransactionId> {
+            return wallet.submitTransaction(tx);
+        },
     };
-  };
+};
 
-  export const configureCombinedContractProviders = async (
+export const configureCombinedContractProviders = async (
     wallet: Wallet & Resource,
-    config: Config,
-  ): Promise<CombinedContractProviders> => {
-    const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
+    config: Config
+): Promise<CombinedContractProviders> => {
+    const walletAndMidnightProvider =
+        await createWalletAndMidnightProvider(wallet);
     return {
-      privateStateProvider: levelPrivateStateProvider<typeof CombinedContractPrivateStateId>({
-        privateStateStoreName: combinedContractConfig.privateStateStoreName,
-      }),
-      publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-      zkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
-      walletProvider: walletAndMidnightProvider,
-      midnightProvider: walletAndMidnightProvider,
-      proofProvider: httpClientProofProvider(config.proofServer),
-      mintDIDzNFTZkConfigProvider: new NodeZkConfigProvider<'mintDIDzNFT'>(combinedContractConfig.zkConfigPath),
-      getDIDzNFTOwnerZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTOwner'>(combinedContractConfig.zkConfigPath),
-      getDIDzNFTMetadataHashZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTMetadataHash'>(
-        combinedContractConfig.zkConfigPath,
-      ),
-      getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<'getOwnerKey'>(combinedContractConfig.zkConfigPath),
-      incrementCounterZkConfigProvider: new NodeZkConfigProvider<'incrementCounter'>(combinedContractConfig.zkConfigPath),
-      getCounterZkConfigProvider: new NodeZkConfigProvider<'getCounter'>(combinedContractConfig.zkConfigPath),
-      getOwnerAddressZkConfigProvider: new NodeZkConfigProvider<'getOwnerAddress'>(combinedContractConfig.zkConfigPath),
-      getDIDzNFTFromIdZkConfigProvider: new NodeZkConfigProvider<'getDIDzNFTFromId'>(combinedContractConfig.zkConfigPath),
+        privateStateProvider: levelPrivateStateProvider<
+            typeof CombinedContractPrivateStateId
+        >({
+            privateStateStoreName: combinedContractConfig.privateStateStoreName,
+        }),
+        publicDataProvider: indexerPublicDataProvider(
+            config.indexer,
+            config.indexerWS
+        ),
+        zkConfigProvider: new NodeZkConfigProvider<"incrementCounter">(
+            combinedContractConfig.zkConfigPath
+        ),
+        walletProvider: walletAndMidnightProvider,
+        midnightProvider: walletAndMidnightProvider,
+        proofProvider: httpClientProofProvider(config.proofServer),
+        mintDIDzNFTZkConfigProvider: new NodeZkConfigProvider<"mintDIDzNFT">(
+            combinedContractConfig.zkConfigPath
+        ),
+        getDIDzNFTOwnerZkConfigProvider:
+            new NodeZkConfigProvider<"getDIDzNFTOwner">(
+                combinedContractConfig.zkConfigPath
+            ),
+        getDIDzNFTMetadataHashZkConfigProvider:
+            new NodeZkConfigProvider<"getDIDzNFTMetadataHash">(
+                combinedContractConfig.zkConfigPath
+            ),
+        getOwnerKeyZkConfigProvider: new NodeZkConfigProvider<"getOwnerKey">(
+            combinedContractConfig.zkConfigPath
+        ),
+        incrementCounterZkConfigProvider:
+            new NodeZkConfigProvider<"incrementCounter">(
+                combinedContractConfig.zkConfigPath
+            ),
+        getCounterZkConfigProvider: new NodeZkConfigProvider<"getCounter">(
+            combinedContractConfig.zkConfigPath
+        ),
+        getOwnerAddressZkConfigProvider:
+            new NodeZkConfigProvider<"getOwnerAddress">(
+                combinedContractConfig.zkConfigPath
+            ),
+        getDIDzNFTFromIdZkConfigProvider:
+            new NodeZkConfigProvider<"getDIDzNFTFromId">(
+                combinedContractConfig.zkConfigPath
+            ),
     };
-  };
+};
+
+export const getWalletFromSeed = async (seed: string, config: Config) => {
+    console.info("Setting up wallet from seed");
+    console.info(`Wallet seed: ${seed}`);
+    const wallet = await WalletBuilder.buildFromSeed(
+        config.indexer,
+        config.indexerWS,
+        config.proofServer,
+        config.node,
+        seed,
+        getZswapNetworkId(),
+        "info",
+        true
+    );
+    wallet.start();
+    return wallet;
+};

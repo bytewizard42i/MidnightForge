@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { getServerConfig, ServerConfig } from './config.js';
 import logger from './logger.js';
-import { CombinedContractContract, CombinedContractPrivateStateId, DeployContractRequest, type ApiResponse, type CombinedContractProviders, type HealthCheckResponse } from './types.js';
+import { CombinedContractContract, CombinedContractPrivateStateId, DeployContractRequest, MintNFTRequest, type ApiResponse, type CombinedContractProviders, type HealthCheckResponse } from './types.js';
 import { SimpleWalletService } from './services/simpleWalletService.js';
 import { ContractService } from './services/contractService.js';
 import * as Rx from 'rxjs';
@@ -18,9 +18,12 @@ import {
 import dotenv from 'dotenv';
 import { Wallet } from '@midnight-ntwrk/wallet-api';
 import { Resource } from '@midnight-ntwrk/wallet';
-import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
+// import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
+import { buildFreshWallet, buildWalletAndWaitForFunds, configureCombinedContractProviders, getWalletFromSeed } from './api.js';
 import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
-import { buildFreshWallet, configureCombinedContractProviders } from './api.js';
+import { hexStringToBytes32 } from './utils.js';
+import { encodeCoinPublicKey, encodeContractAddress } from '@midnight-ntwrk/compact-runtime';
 
 dotenv.config();
 
@@ -56,9 +59,9 @@ const initializeServices = async () => {
     // Get providers and initialize contract service
     console.log('=== DEBUG ContractService Initialization ===');
     const providers = walletService.getProviders();
-    console.log('Providers from walletService:', providers);
-    console.log('Providers type:', typeof providers);
-    console.log('Providers keys:', providers ? Object.keys(providers) : 'null/undefined');
+    // console.log('Providers from walletService:', providers);
+    // console.log('Providers type:', typeof providers);
+    // console.log('Providers keys:', providers ? Object.keys(providers) : 'null/undefined');
     
     contractService = new ContractService(providers, wallet);
     console.log('ContractService created:', !!contractService);
@@ -155,13 +158,26 @@ app.post('/api/deploy-contract', async (req: Request, res: Response) => {
     // }
 
     // Build wallet and wait for funds
+    // const wallet = await getWalletFromSeed(config.walletSeed, config.midnight);
+
     const wallet = await buildFreshWallet(config);
+
+    console.info('Wallet:', wallet);
 
     // Call contract deployment service
     logger.info('Deploying counter contract...');
+    const state = await Rx.firstValueFrom(wallet.state());
+
+    console.info('State:', state);
+    console.info('Owner address:', state.address);
+
+    const ownerAddressBytes = encodeCoinPublicKey(state.coinPublicKeyLegacy);
     
-    const ownerSecretKeyBytes = fromHex(config.walletSeed);
-    const ownerAddressBytes = fromHex(ownerAddress);
+    const ownerSecretKeyBytes = fromHex(ownerSecretKey);
+
+
+    console.info('Using actual wallet public key as owner address:', state.address);
+    console.info('Owner address bytes length:', ownerAddressBytes.length);  
     
     // // Verify they're exactly 32 bytes
     // if (ownerSecretKeyBytes.length !== 32) throw new Error(`Secret key must be 32 bytes, got ${ownerSecretKeyBytes.length}`);
@@ -206,7 +222,16 @@ app.post('/api/deploy-contract', async (req: Request, res: Response) => {
 // NFT minting endpoint
 app.post('/api/mint-nft', async (req: Request, res: Response) => {
   try {
-    const { contractAddress, metadataHash, did } = req.body;
+    logger.info('Raw request body:', req.body);
+    const { contractAddress, metadataHash, did } : MintNFTRequest = req.body;
+    
+    logger.info('Extracted values:', {
+      contractAddress: contractAddress,
+      contractAddressType: typeof contractAddress,
+      contractAddressLength: contractAddress?.length,
+      metadataHash: metadataHash?.substring(0, 8) + '...',
+      did: did?.substring(0, 8) + '...'
+    });
     
     if (!contractAddress || !metadataHash || !did) {
       const response: ApiResponse = {
@@ -216,17 +241,75 @@ app.post('/api/mint-nft', async (req: Request, res: Response) => {
       return res.status(400).json(response);
     }
 
-    // TODO: Call NFT minting service
+    if (!contractService) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Contract service not initialized. Please wait for wallet initialization to complete.',
+      };
+      return res.status(503).json(response);
+    }
+
+    // Build wallet and wait for funds
+    const wallet = await buildFreshWallet(config);
+
+    // Call NFT minting service
+    logger.info('Minting DIDz NFT...');
     
-    // Placeholder response
-    const response: ApiResponse = {
-      success: false,
-      error: 'NFT minting not yet implemented - wallet initialization required',
-    };
+    // Convert hex strings to bytes (only for metadata and DID, not contract address)
+    const metadataHashBytes = fromHex(metadataHash);
+    const didBytes = fromHex(did);
     
-    return res.status(501).json(response);
+    // Verify they're exactly 32 bytes
+    if (metadataHashBytes.length !== 32) throw new Error(`Metadata hash must be 32 bytes, got ${metadataHashBytes.length}`);
+    if (didBytes.length !== 32) throw new Error(`DID must be 32 bytes, got ${didBytes.length}`);
+
+    const providers = await configureCombinedContractProviders(wallet, config.midnight);
+    
+    console.info('Finding deployed contract...');
+    console.info('Contract address:', contractAddress);
+    console.info('Contract address length:', contractAddress.length);
+    console.info('Contract address bytes:', contractAddress.length / 2);
+    
+    // Find the deployed contract using findDeployedContract
+    // Note: contractAddress is used as-is (string), not converted to bytes
+    const foundContract = await findDeployedContract(providers, {
+      contractAddress, // Use contract address directly as string
+      contract: combinedContractInstance,
+      privateStateId: CombinedContractPrivateStateId,
+      initialPrivateState: { privateValue: 0 },
+    });
+
+    console.log('Found contract:', foundContract, null, 2);
+
+    console.info('Calling mintDIDzNFT circuit...');
+    // Call the mintDIDzNFT circuit
+    // Note: The contract expects DID and NFTMetadataHash structs with bytes field
+    const mintResult = await foundContract.callTx.mintDIDzNFT(
+      { bytes: didBytes },        // recipientDID: DID
+      { bytes: metadataHashBytes } // metadataHash: NFTMetadataHash
+    );
+    
+    const nftId = Number(mintResult.private.result);
+    const transactionId = mintResult.public.txId;
+    
+    console.info(`Minted NFT with ID: ${nftId}, Transaction: ${transactionId}`);
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        nftId: nftId,
+        transactionId: transactionId,
+        message: 'NFT minted successfully',
+      },
+    });
   } catch (error) {
-    logger.error('Error in mint-nft endpoint:', error);
+    console.error('Error in mint-nft endpoint:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error,
+      error: error
+    });
     const response: ApiResponse = {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
