@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styles from './DeployContract.module.css';
 import { useMidnightForgeDeployment } from '../hooks/useMidnightForge';
+import DeploymentModal from './DeploymentModal';
 
 interface DeployContractProps {
   onDeploySuccess: (contractAddress: string) => void;
@@ -159,12 +160,7 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
             )}
           </button>
 
-          {/* Status Message */}
-          {(deploymentStatus || isDeploying) && (
-            <div className={styles.statusMessage}>
-              {deploymentStatus || 'Preparing deployment...'}
-            </div>
-          )}
+
         </form>
       ) : (
         <div className={styles.successContainer}>
@@ -209,6 +205,12 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
           </div>
         </div>
       )}
+      
+      {/* Deployment Modal */}
+      <DeploymentModal 
+        isOpen={isDeploying} 
+        deploymentStatus={deploymentStatus || 'Preparing deployment...'} 
+      />
     </div>
   );
 };
