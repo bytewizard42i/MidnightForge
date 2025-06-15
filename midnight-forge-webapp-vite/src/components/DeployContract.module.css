@@ -242,6 +242,35 @@
   backdrop-filter: blur(10px);
 }
 
+.actionButtons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.proceedButton {
+  background: linear-gradient(135deg, var(--midnight-success) 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.proceedButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669 0%, var(--midnight-success) 100%);
+}
+
 .resetButton {
   background: var(--midnight-surface);
   color: var(--midnight-text-secondary);
@@ -283,5 +312,16 @@
   .address {
     max-width: 100%;
     word-break: break-all;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .proceedButton,
+  .resetButton {
+    width: 100%;
+    justify-content: center;
   }
 } 

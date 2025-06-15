@@ -24,6 +24,7 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
 
   // Local state
   const [deploymentStatus, setDeploymentStatus] = useState<string>('');
+  const [deployedContractAddress, setDeployedContractAddress] = useState<string>('');
 
   const handleDeploy = async () => {
     console.log('Deploy button clicked!');
@@ -55,11 +56,8 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
 
       if (result.success && result.data?.contractAddress) {
         setDeploymentStatus(`✅ Contract deployed successfully!`);
-        
-        // Call success callback with the real contract address
-        setTimeout(() => {
-          onDeploySuccess(result.data!.contractAddress);
-        }, 1500);
+        setDeployedContractAddress(result.data.contractAddress);
+        // Don't auto-navigate - let user choose when to proceed
       } else {
         setDeploymentStatus(`❌ Deployment failed: ${result.error || 'Unknown error'}`);
       }
@@ -75,7 +73,14 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
     setContractSymbol('DIDZ');
     setMaxSupply('10000');
     setDeploymentStatus('');
+    setDeployedContractAddress('');
     clearDeploymentError();
+  };
+
+  const handleProceedToNextStep = () => {
+    if (deployedContractAddress) {
+      onDeploySuccess(deployedContractAddress);
+    }
   };
 
   const isFormValid = contractName.trim() && contractSymbol.trim() && maxSupply && parseInt(maxSupply) > 0;
@@ -87,7 +92,7 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
         <p>Configure and deploy your smart contract to the Midnight blockchain</p>
       </div>
 
-      {!lastContractAddress ? (
+      {!lastContractAddress && !deployedContractAddress ? (
         <form onSubmit={(e) => { e.preventDefault(); handleDeploy(); }} className={styles.deployForm}>
           <div className={styles.formGroup}>
             <label htmlFor="contractName">Contract Name</label>
@@ -177,7 +182,7 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
             </div>
             <div className={styles.detailItem}>
               <strong>Contract Address:</strong>
-              <code className={styles.address}>{lastContractAddress}</code>
+              <code className={styles.address}>{deployedContractAddress || lastContractAddress}</code>
             </div>
             {lastDeployment?.data && (
               <div className={styles.detailItem}>
@@ -188,12 +193,20 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
           <p className={styles.nextStepMessage}>
             🎯 Great! Now you can proceed to create NFT metadata
           </p>
-          <button 
-            onClick={resetForm}
-            className={styles.resetButton}
-          >
-            Deploy Another Contract
-          </button>
+          <div className={styles.actionButtons}>
+            <button 
+              onClick={handleProceedToNextStep}
+              className={styles.proceedButton}
+            >
+              ➡️ Continue to NFT Creation
+            </button>
+            <button 
+              onClick={resetForm}
+              className={styles.resetButton}
+            >
+              🔄 Deploy Another Contract
+            </button>
+          </div>
         </div>
       )}
     </div>
