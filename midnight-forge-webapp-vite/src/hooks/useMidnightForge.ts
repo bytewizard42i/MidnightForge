@@ -7,7 +7,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { 
-  MidnightForgeClient, 
   DeployContractRequest, 
   DeployContractResponse,
   MintNFTRequest,

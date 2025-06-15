@@ -325,6 +325,11 @@ const server = app.listen(config.port, () => {
   logger.info(`Network: ${config.midnight.indexer}`);
 });
 
+// Set server timeout to 2 minutes for contract deployment operations
+server.timeout = 120000; // 2 minutes
+server.keepAliveTimeout = 65000; // Slightly longer than client timeout
+server.headersTimeout = 66000; // Slightly longer than keepAliveTimeout
+
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully');

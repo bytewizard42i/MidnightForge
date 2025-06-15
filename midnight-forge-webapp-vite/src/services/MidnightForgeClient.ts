@@ -92,8 +92,8 @@ export class MidnightForgeClient {
 
   constructor(config: MidnightForgeClientConfig = {}) {
     this.baseUrl = config.baseUrl || 'http://localhost:3001';
-    this.timeout = config.timeout || 30000; // 30 seconds
-    this.retries = config.retries || 3;
+    this.timeout = config.timeout || 90000; // 90 seconds for contract deployment
+    this.retries = config.retries || 1;
   }
 
   /**
@@ -102,7 +102,8 @@ export class MidnightForgeClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    retryCount = 0
+    currentRetryCount = 0,
+    maxRetries?: number
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     
@@ -130,10 +131,11 @@ export class MidnightForgeClient {
     } catch (error) {
       clearTimeout(timeoutId);
 
-      if (retryCount < this.retries && this.shouldRetry(error)) {
-        console.warn(`Request failed, retrying (${retryCount + 1}/${this.retries}):`, error);
-        await this.delay(1000 * Math.pow(2, retryCount)); // Exponential backoff
-        return this.request<T>(endpoint, options, retryCount + 1);
+      const effectiveMaxRetries = maxRetries !== undefined ? maxRetries : this.retries;
+      if (currentRetryCount < effectiveMaxRetries && this.shouldRetry(error)) {
+        console.warn(`Request failed, retrying (${currentRetryCount + 1}/${effectiveMaxRetries}):`, error);
+        await this.delay(1000 * Math.pow(2, currentRetryCount)); // Exponential backoff
+        return this.request<T>(endpoint, options, currentRetryCount + 1, maxRetries);
       }
 
       throw new Error(`Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -175,10 +177,11 @@ export class MidnightForgeClient {
    * Deploy Contract - Deploy a new combined contract to the blockchain
    */
   async deployContract(request: DeployContractRequest): Promise<DeployContractResponse> {
+    // No retries for deployment to avoid duplicate contracts
     return this.request<DeployContractResponse>('/api/deploy-contract', {
       method: 'POST',
       body: JSON.stringify(request),
-    });
+    }, 0, 0); // Force no retries
   }
 
   /**
