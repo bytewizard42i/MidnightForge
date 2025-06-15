@@ -51,6 +51,7 @@ export interface MintNFTRequest {
 
 export interface MintNFTResponse {
   success: boolean;
+  nftId?: number;
   transactionId?: string;
   error?: string;
 }

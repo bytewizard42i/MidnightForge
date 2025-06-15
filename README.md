@@ -147,6 +147,27 @@ cd MidnightForge
 npm install
 ```
 
+### 🚀 Quick Start - Standalone Mode
+Run the complete application stack (blockchain + backend + frontend):
+
+```bash
+# Option 1: Using npm scripts
+npm run standalone
+
+# Option 2: Using the convenient shell script
+./start-standalone.sh
+
+# Option 3: Background mode
+npm run standalone:detached
+```
+
+This will start:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3001
+- **Blockchain Infrastructure**: Indexer (8088), Node (9944), Proof Server (6300)
+
+For detailed standalone setup instructions, see [STANDALONE.md](./STANDALONE.md).
+
 ---
 
 ## ⚡ Build & Compile

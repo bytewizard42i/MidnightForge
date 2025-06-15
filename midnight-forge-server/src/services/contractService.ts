@@ -19,10 +19,10 @@ export class ContractService {
 
   constructor(providers: CombinedContractProviders, wallet: Wallet & Resource) {
     console.log('=== ContractService Constructor ===');
-    console.log('Received providers:', providers);
-    console.log('Providers type:', typeof providers);
-    console.log('Received wallet:', !!wallet);
-    console.log('Wallet methods:', wallet ? Object.getOwnPropertyNames(Object.getPrototypeOf(wallet)) : 'no wallet');
+    // console.log('Received providers:', providers);
+    // console.log('Providers type:', typeof providers);
+    // console.log('Received wallet:', !!wallet);
+    // console.log('Wallet methods:', wallet ? Object.getOwnPropertyNames(Object.getPrototypeOf(wallet)) : 'no wallet');
     
     this.providers = providers;
     this.wallet = wallet;
