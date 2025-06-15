@@ -8,6 +8,7 @@ import DeployContract from './components/DeployContract';
 function App() {
   const [currentStep, setCurrentStep] = useState('deploy');
   const [contractDeployed, setContractDeployed] = useState(false);
+  const [deployedContractAddress, setDeployedContractAddress] = useState<string>('');
 
   const steps = [
     {
@@ -36,8 +37,9 @@ function App() {
     }
   };
 
-  const handleDeploySuccess = () => {
+  const handleDeploySuccess = (contractAddress: string) => {
     setContractDeployed(true);
+    setDeployedContractAddress(contractAddress);
     // Auto-navigate to next step after successful deployment
     setTimeout(() => {
       setCurrentStep('create-nft');
@@ -49,7 +51,7 @@ function App() {
       case 'deploy':
         return <DeployContract onDeploySuccess={handleDeploySuccess} />;
       case 'create-nft':
-        return <CreateMetadataForm />;
+        return <CreateMetadataForm contractAddress={deployedContractAddress} />;
       default:
         return <DeployContract onDeploySuccess={handleDeploySuccess} />;
     }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import PinataService from '../services/PinataService';
+import { MidnightForgeClient } from '../services/MidnightForgeClient';
+import { generateDID } from '../utils/nftUtils';
 
 // Helper to calculate SHA-256 hash
 async function calculateSha256(data: string): Promise<string> {
@@ -24,7 +26,11 @@ interface NFTMetadata {
   attributes: Attribute[];
 }
 
-const CreateMetadataForm: React.FC = () => {
+interface CreateMetadataFormProps {
+  contractAddress?: string; // Optional contract address from parent
+}
+
+const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress }) => {
   const [name, setName] = useState<string>('Admin Role NFT');
   const [description, setDescription] = useState<string>('This is an Admin Role NFT');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -34,6 +40,18 @@ const CreateMetadataForm: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<boolean>(false);
+  
+  // NFT minting state
+  const [shouldMintNFT, setShouldMintNFT] = useState<boolean>(true);
+  const [inputContractAddress, setInputContractAddress] = useState<string>('');
+  const [mintedNFTId, setMintedNFTId] = useState<number | null>(null);
+  const [mintTransactionId, setMintTransactionId] = useState<string | null>(null);
+
+  // Initialize Midnight Forge client
+  const midnightClient = new MidnightForgeClient({
+    baseUrl: 'http://localhost:3001',
+    timeout: 120000, // 2 minutes for minting operations
+  });
 
   useEffect(() => {
     // Cleanup the object URL when component unmounts or imageFile changes
@@ -87,6 +105,8 @@ const CreateMetadataForm: React.FC = () => {
     setStatusMessage('');
     setError('');
     setSuccess(false);
+    setMintedNFTId(null);
+    setMintTransactionId(null);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -95,6 +115,8 @@ const CreateMetadataForm: React.FC = () => {
     setStatusMessage('Starting metadata creation...');
     setError('');
     setSuccess(false);
+    setMintedNFTId(null);
+    setMintTransactionId(null);
 
     try {
       if (!imageFile) {
@@ -109,6 +131,12 @@ const CreateMetadataForm: React.FC = () => {
       // Validate file type
       if (!imageFile.type.startsWith('image/')) {
         throw new Error('Please select a valid image file.');
+      }
+
+      // Validate contract address if minting is enabled
+      const targetContractAddress = contractAddress || inputContractAddress;
+      if (shouldMintNFT && !targetContractAddress) {
+        throw new Error('Please provide a contract address to mint the NFT.');
       }
 
       // 1. Upload Image to IPFS
@@ -140,7 +168,7 @@ const CreateMetadataForm: React.FC = () => {
       console.log('Image IPFS URI:', ipfsImageUri);
       console.log('Metadata CID:', metadataCid);
       console.log('Metadata IPFS URI:', ipfsMetadataUri);
-      // with a gateway url
+      // with a gateway url // log links so we can see them in the console
       console.log('--- Gateway Links ---');
       console.log('Image (ipfs.io): ', `https://ipfs.io/ipfs/${imageCid}`);
       console.log('Metadata (ipfs.io): ', `https://ipfs.io/ipfs/${metadataCid}`);
@@ -155,11 +183,46 @@ const CreateMetadataForm: React.FC = () => {
       console.log('Generated Metadata:', metadata);
       console.log('=====================================');
 
-      setStatusMessage(`✅ Success! Metadata Hash: ${metadataHash}`);
-      setSuccess(true);
+      // 5. Mint NFT if enabled
+      if (shouldMintNFT && targetContractAddress) {
+        setStatusMessage('🎨 Minting NFT on Midnight blockchain...');
+        
+        // Generate a DID for this NFT (using a timestamp for uniqueness)
+        const uniqueId = `nft-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const did = await generateDID(targetContractAddress, uniqueId);
+        
+        console.log('=== NFT Minting Details ===');
+        console.log('Contract Address:', targetContractAddress);
+        console.log('Metadata Hash:', metadataHash);
+        console.log('Generated DID:', did);
+        console.log('Unique ID used:', uniqueId);
+        console.log('===========================');
 
-      // In a real app, you would now send metadataHash and other info to your Midnight contract's mint circuit
-      // For now, we'll just show a success message.
+        try {
+          const mintResult = await midnightClient.mintNFT({
+            contractAddress: targetContractAddress,
+            metadataHash: metadataHash,
+            did: did,
+          });
+
+          if (mintResult.success && mintResult.data) {
+            setMintedNFTId(mintResult.data.nftId);
+            setMintTransactionId(mintResult.data.transactionId);
+            setStatusMessage(`🎉 NFT minted successfully! NFT ID: ${mintResult.data.nftId}`);
+            console.log('✅ NFT Minted Successfully:', mintResult.data);
+          } else {
+            throw new Error(mintResult.error || 'Failed to mint NFT');
+          }
+        } catch (mintError: any) {
+          console.error('❌ NFT Minting Error:', mintError);
+          setStatusMessage(`✅ Metadata created successfully, but NFT minting failed: ${mintError.message}`);
+          // Don't throw here - metadata creation was successful
+        }
+      } else {
+        setStatusMessage(`✅ Success! Metadata Hash: ${metadataHash}`);
+      }
+
+      setSuccess(true);
 
     } catch (error: any) {
       console.error('Error creating metadata:', error);
@@ -279,6 +342,53 @@ const CreateMetadataForm: React.FC = () => {
           Add Attribute
         </button>
 
+        {/* NFT Minting Section */}
+        <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+          <h3 style={{ margin: '0 0 15px 0', color: '#495057' }}>🎨 NFT Minting Options</h3>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={shouldMintNFT}
+                onChange={(e) => setShouldMintNFT(e.target.checked)}
+                style={{ transform: 'scale(1.2)' }}
+              />
+              <span style={{ fontWeight: 'bold' }}>Mint NFT after creating metadata</span>
+            </label>
+            <p style={{ margin: '5px 0 0 28px', fontSize: '14px', color: '#6c757d' }}>
+              Automatically mint the NFT on the Midnight blockchain after uploading metadata to IPFS
+            </p>
+          </div>
+
+          {shouldMintNFT && !contractAddress && (
+            <div>
+              <label htmlFor="contractAddress" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                Contract Address:
+              </label>
+              <input
+                type="text"
+                id="contractAddress"
+                value={inputContractAddress}
+                onChange={(e) => setInputContractAddress(e.target.value)}
+                placeholder="Enter the deployed contract address (e.g., 0x...)"
+                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+              />
+              <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#6c757d' }}>
+                You can get this from the Deploy Contract step or use an existing contract address
+              </p>
+            </div>
+          )}
+
+          {shouldMintNFT && contractAddress && (
+            <div style={{ padding: '10px', backgroundColor: '#d4edda', borderRadius: '4px', border: '1px solid #c3e6cb' }}>
+              <p style={{ margin: '0', fontSize: '14px', color: '#155724' }}>
+                ✅ <strong>Contract Address:</strong> {contractAddress}
+              </p>
+            </div>
+          )}
+        </div>
+
         <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
           <button
             type="submit"
@@ -327,6 +437,21 @@ const CreateMetadataForm: React.FC = () => {
           wordWrap: 'break-word' 
         }}>
           <strong>Status:</strong> {statusMessage}
+          
+          {/* Show NFT minting results */}
+          {mintedNFTId !== null && (
+            <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#d1ecf1', borderRadius: '4px', border: '1px solid #bee5eb' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: '#0c5460' }}>🎉 NFT Minted Successfully!</h4>
+              <p style={{ margin: '0', fontSize: '14px', color: '#0c5460' }}>
+                <strong>NFT ID:</strong> {mintedNFTId}
+              </p>
+              {mintTransactionId && (
+                <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#0c5460' }}>
+                  <strong>Transaction ID:</strong> {mintTransactionId}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

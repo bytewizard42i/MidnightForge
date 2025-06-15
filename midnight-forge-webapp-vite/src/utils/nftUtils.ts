@@ -1,6 +1,40 @@
 // import { type BrowserWalletManager } from '../contexts/WalletManager';
 // import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
 
+/**
+ * Generate a deterministic DID from an owner address and unique identifier
+ * This matches the server-side DID generation logic
+ */
+export async function generateDID(ownerAddress: string, uniqueId: string): Promise<string> {
+  // Create a deterministic input by combining owner address and uniqueId
+  const input = `${ownerAddress}:${uniqueId}`;
+  
+  // Convert to bytes
+  const encoder = new TextEncoder();
+  const inputBytes = encoder.encode(input);
+  
+  // Generate a 32-byte hash using SHA-256
+  const hashBuffer = await crypto.subtle.digest('SHA-256', inputBytes);
+  const hashBytes = new Uint8Array(hashBuffer);
+  
+  // Convert to hex string
+  const hexString = Array.from(hashBytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  
+  return hexString;
+}
+
+/**
+ * Generate a random 32-byte hex string for testing purposes
+ */
+export function generateRandomHex32(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 /** Deploy a new contract */
 // export async function deployNewContract(
