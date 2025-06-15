@@ -343,27 +343,77 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
         </button>
 
         {/* NFT Minting Section */}
-        <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#495057' }}>🎨 NFT Minting Options</h3>
+        <div style={{ 
+          marginTop: '30px', 
+          padding: '24px', 
+          background: 'linear-gradient(135deg, #1f2937, #374151)', 
+          borderRadius: '12px', 
+          border: '2px solid #4b5563',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 20px 0', 
+            color: 'white', 
+            fontSize: '18px',
+            fontWeight: 'bold',
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+          }}>
+            🎨 NFT Minting Options
+          </h3>
           
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '12px', 
+              cursor: 'pointer',
+              padding: '12px',
+              borderRadius: '8px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              transition: 'all 0.3s ease'
+            }}>
               <input
                 type="checkbox"
                 checked={shouldMintNFT}
                 onChange={(e) => setShouldMintNFT(e.target.checked)}
-                style={{ transform: 'scale(1.2)' }}
+                style={{ 
+                  transform: 'scale(1.3)',
+                  accentColor: '#7c3aed'
+                }}
               />
-              <span style={{ fontWeight: 'bold' }}>Mint NFT after creating metadata</span>
+              <span style={{ 
+                fontWeight: 'bold', 
+                color: 'white',
+                fontSize: '16px'
+              }}>
+                Mint NFT after creating metadata
+              </span>
             </label>
-            <p style={{ margin: '5px 0 0 28px', fontSize: '14px', color: '#6c757d' }}>
+            <p style={{ 
+              margin: '8px 0 0 44px', 
+              fontSize: '14px', 
+              color: '#d1d5db',
+              lineHeight: '1.5'
+            }}>
               Automatically mint the NFT on the Midnight blockchain after uploading metadata to IPFS
             </p>
           </div>
 
           {shouldMintNFT && !contractAddress && (
-            <div>
-              <label htmlFor="contractAddress" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            <div style={{
+              padding: '16px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <label htmlFor="contractAddress" style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: 'bold',
+                color: 'white',
+                fontSize: '14px'
+              }}>
                 Contract Address:
               </label>
               <input
@@ -371,19 +421,58 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
                 id="contractAddress"
                 value={inputContractAddress}
                 onChange={(e) => setInputContractAddress(e.target.value)}
-                placeholder="Enter the deployed contract address (e.g., 0x...)"
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                placeholder="Enter the deployed contract address (e.g., 0200a5c7f4aba7f...)"
+                style={{ 
+                  width: '100%', 
+                  padding: '12px', 
+                  borderRadius: '8px', 
+                  border: '2px solid #4b5563',
+                  background: '#1f2937',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontFamily: 'monospace'
+                }}
               />
-              <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#6c757d' }}>
+              <p style={{ 
+                margin: '8px 0 0 0', 
+                fontSize: '12px', 
+                color: '#9ca3af',
+                lineHeight: '1.4'
+              }}>
                 You can get this from the Deploy Contract step or use an existing contract address
               </p>
             </div>
           )}
 
           {shouldMintNFT && contractAddress && (
-            <div style={{ padding: '10px', backgroundColor: '#d4edda', borderRadius: '4px', border: '1px solid #c3e6cb' }}>
-              <p style={{ margin: '0', fontSize: '14px', color: '#155724' }}>
-                ✅ <strong>Contract Address:</strong> {contractAddress}
+            <div style={{ 
+              padding: '16px', 
+              background: 'linear-gradient(135deg, #059669, #10b981)', 
+              borderRadius: '8px', 
+              border: '2px solid #34d399',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+            }}>
+              <p style={{ 
+                margin: '0', 
+                fontSize: '14px', 
+                color: 'white',
+                fontWeight: 'bold',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+              }}>
+                ✅ <strong>Contract Address:</strong>
+              </p>
+              <p style={{
+                margin: '4px 0 0 0',
+                fontSize: '12px',
+                color: '#d1fae5',
+                fontFamily: 'monospace',
+                wordBreak: 'break-all',
+                background: 'rgba(255, 255, 255, 0.1)',
+                padding: '8px',
+                borderRadius: '4px',
+                marginTop: '8px'
+              }}>
+                {contractAddress}
               </p>
             </div>
           )}
@@ -395,16 +484,26 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
             disabled={loading || !hasApiKeys}
             style={{ 
               padding: '12px 20px', 
-              borderRadius: '4px', 
+              borderRadius: '8px', 
               border: 'none', 
-              backgroundColor: loading || !hasApiKeys ? '#6c757d' : '#28a745', 
+              background: loading || !hasApiKeys 
+                ? 'linear-gradient(135deg, #6c757d, #5a6268)' 
+                : shouldMintNFT 
+                  ? 'linear-gradient(135deg, #7c3aed, #a855f7)' 
+                  : 'linear-gradient(135deg, #059669, #10b981)',
               color: 'white', 
               fontSize: '16px', 
+              fontWeight: 'bold',
               cursor: loading || !hasApiKeys ? 'not-allowed' : 'pointer',
-              flex: 1
+              flex: 1,
+              boxShadow: loading || !hasApiKeys ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.3)',
+              transition: 'all 0.3s ease'
             }}
           >
-            {loading ? 'Creating Metadata...' : 'Create Metadata'}
+            {loading 
+              ? (shouldMintNFT ? '🎨 Creating & Minting...' : '📝 Creating Metadata...') 
+              : (shouldMintNFT ? '🎨 Create & Mint NFT' : '📝 Create Metadata')
+            }
           </button>
           
           {success && (
@@ -413,15 +512,26 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
               onClick={resetForm}
               style={{ 
                 padding: '12px 20px', 
-                borderRadius: '4px', 
-                border: '1px solid #007bff', 
-                backgroundColor: 'white', 
-                color: '#007bff', 
+                borderRadius: '8px', 
+                border: '2px solid #3b82f6', 
+                background: 'linear-gradient(135deg, #1e40af, #3b82f6)', 
+                color: 'white', 
                 fontSize: '16px', 
-                cursor: 'pointer'
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
               }}
             >
-              Create Another
+              🔄 Create Another
             </button>
           )}
         </div>
@@ -430,26 +540,75 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
       {statusMessage && (
         <div style={{ 
           marginTop: '20px', 
-          padding: '15px', 
-          backgroundColor: success ? '#d4edda' : error ? '#f8d7da' : '#e9ecef', 
-          borderRadius: '4px', 
-          border: `1px solid ${success ? '#c3e6cb' : error ? '#f5c6cb' : '#ced4da'}`,
-          wordWrap: 'break-word' 
+          padding: '20px', 
+          background: success 
+            ? 'linear-gradient(135deg, #1e3a8a, #1e40af)' 
+            : error 
+              ? 'linear-gradient(135deg, #dc2626, #ef4444)' 
+              : 'linear-gradient(135deg, #374151, #4b5563)', 
+          borderRadius: '12px', 
+          border: `2px solid ${success ? '#3b82f6' : error ? '#f87171' : '#6b7280'}`,
+          wordWrap: 'break-word',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4)'
         }}>
-          <strong>Status:</strong> {statusMessage}
+          <div style={{ 
+            color: 'white', 
+            fontSize: '16px', 
+            fontWeight: 'bold',
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+          }}>
+            <span style={{ marginRight: '8px' }}>
+              {success ? '✅' : error ? '❌' : '⏳'}
+            </span>
+            {statusMessage}
+          </div>
           
           {/* Show NFT minting results */}
           {mintedNFTId !== null && (
-            <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#d1ecf1', borderRadius: '4px', border: '1px solid #bee5eb' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#0c5460' }}>🎉 NFT Minted Successfully!</h4>
-              <p style={{ margin: '0', fontSize: '14px', color: '#0c5460' }}>
-                <strong>NFT ID:</strong> {mintedNFTId}
-              </p>
-              {mintTransactionId && (
-                <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#0c5460' }}>
-                  <strong>Transaction ID:</strong> {mintTransactionId}
+            <div style={{ 
+              marginTop: '16px', 
+              padding: '16px', 
+              background: 'linear-gradient(135deg, #059669, #10b981)', 
+              borderRadius: '8px', 
+              border: '2px solid #34d399',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+            }}>
+              <h4 style={{ 
+                margin: '0 0 12px 0', 
+                color: 'white', 
+                fontSize: '18px',
+                fontWeight: 'bold',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+              }}>
+                🎉 NFT Minted Successfully!
+              </h4>
+              <div style={{ 
+                background: 'rgba(255, 255, 255, 0.1)', 
+                padding: '12px', 
+                borderRadius: '6px',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <p style={{ 
+                  margin: '0 0 8px 0', 
+                  fontSize: '14px', 
+                  color: 'white',
+                  fontWeight: 'bold'
+                }}>
+                  <span style={{ color: '#d1fae5' }}>NFT ID:</span> {mintedNFTId}
                 </p>
-              )}
+                {mintTransactionId && (
+                  <p style={{ 
+                    margin: '0', 
+                    fontSize: '12px', 
+                    color: '#d1fae5',
+                    wordBreak: 'break-all',
+                    fontFamily: 'monospace'
+                  }}>
+                    <span style={{ color: 'white', fontWeight: 'bold' }}>Transaction ID:</span><br/>
+                    {mintTransactionId}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -21,8 +21,8 @@ function App() {
     },
     {
       id: 'create-nft',
-      title: 'Create NFT Metadata',
-      description: 'Create and upload metadata for your NFT to IPFS',
+      title: 'Mint DIDz NFT',
+      description: 'Mint your DIDz NFT to the Midnight blockchain',
       icon: '🎨',
       completed: false,
       locked: !contractDeployed
