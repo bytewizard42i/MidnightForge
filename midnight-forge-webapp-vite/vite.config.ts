@@ -6,6 +6,11 @@ import { viteCommonjs } from "@originjs/vite-plugin-commonjs";
 
 // https://vite.dev/config/
 export default defineConfig({
+    server: {
+        host: true, // Listen on all addresses for Docker
+        port: 5173,
+        strictPort: true,
+    },
     plugins: [
       react(),
       viteCommonjs({ // Move viteCommonjs here, before wasm and topLevelAwait

@@ -1,0 +1,36 @@
+services:
+  # Application Services Only (using existing blockchain infrastructure)
+  midnight-forge-server:
+    container_name: 'midnight-forge-server'
+    build:
+      context: .
+      dockerfile: ./midnight-forge-server/Dockerfile.root
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: "development"
+      PORT: "3001"
+      INDEXER_URL: "http://host.docker.internal:8088"
+      PROOF_SERVER_URL: "http://host.docker.internal:6300"
+      NODE_URL: "ws://host.docker.internal:9944"
+    volumes:
+      - ./midnight-forge-server:/app
+      - /app/node_modules
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  midnight-forge-webapp:
+    container_name: 'midnight-forge-webapp'
+    build:
+      context: ./midnight-forge-webapp-vite
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_SERVER_URL: "http://localhost:3001"
+      VITE_INDEXER_URL: "http://localhost:8088"
+    depends_on:
+      - midnight-forge-server
+    volumes:
+      - ./midnight-forge-webapp-vite:/app
+      - /app/node_modules 
