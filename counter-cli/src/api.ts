@@ -404,7 +404,10 @@ export const waitForFunds = (wallet: Wallet) =>
         );
       }),
       Rx.filter((state) => {
-        // Let's allow progress only if wallet is synced
+        // Let's allow progress only if wallet is close enough
+        // const applyGap = state.syncProgress?.lag.applyGap ?? 0n;
+        // const sourceGap = state.syncProgress?.lag.sourceGap ?? 0n;
+        // return applyGap < 100n && sourceGap < 100n;
         return state.syncProgress?.synced === true;
       }),
       Rx.map((s) => s.balances[nativeToken()] ?? 0n),

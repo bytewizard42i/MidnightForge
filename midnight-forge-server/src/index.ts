@@ -11,9 +11,6 @@ import * as Rx from 'rxjs';
 
 import {
   CombinedContract,
-  CombinedContractPrivateState,
-  Counter,
-  type CounterPrivateState,
   witnesses,
 } from '@midnight-forge/protocol-did-contract';
 
@@ -23,7 +20,7 @@ import { Wallet } from '@midnight-ntwrk/wallet-api';
 import { Resource } from '@midnight-ntwrk/wallet';
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
-import { randomBytes } from 'crypto';
+import { buildFreshWallet, configureCombinedContractProviders } from './api.js';
 
 dotenv.config();
 
@@ -149,39 +146,50 @@ app.post('/api/deploy-contract', async (req: Request, res: Response) => {
       return res.status(503).json(response);
     }
 
-    if (!wallet) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Wallet not initialized. Please wait for wallet initialization to complete.',
-      };
-      return res.status(503).json(response);
-    }
+    // if (!wallet) {
+    //   const response: ApiResponse = {
+    //     success: false,
+    //     error: 'Wallet not initialized. Please wait for wallet initialization to complete.',
+    //   };
+    //   return res.status(503).json(response);
+    // }
 
+    // Build wallet and wait for funds
+    const wallet = await buildFreshWallet(config);
 
-    
     // Call contract deployment service
     logger.info('Deploying counter contract...');
     
-    const ownerSecretKeyBytes = fromHex("55ddac2bd7414e6ca90dcf42126b2d97cd4ddd72231bea50bbcffbfa826d8f0e");
-    const ownerAddressBytes = randomBytes(32);
+    const ownerSecretKeyBytes = fromHex(config.walletSeed);
+    const ownerAddressBytes = fromHex(ownerAddress);
     
-    // Verify they're exactly 32 bytes
-    if (ownerSecretKeyBytes.length !== 32) throw new Error(`Secret key must be 32 bytes, got ${ownerSecretKeyBytes.length}`);
-    if (ownerAddressBytes.length !== 32) throw new Error(`Address must be 32 bytes, got ${ownerAddressBytes.length}`);
+    // // Verify they're exactly 32 bytes
+    // if (ownerSecretKeyBytes.length !== 32) throw new Error(`Secret key must be 32 bytes, got ${ownerSecretKeyBytes.length}`);
+    // if (ownerAddressBytes.length !== 32) throw new Error(`Address must be 32 bytes, got ${ownerAddressBytes.length}`);
+
+    // // Let's use the genesis wallet for now to deploy the contract
+    // const genesisWallet = await walletService.getWalletFromSeed(config);
+    // const genesisState = await Rx.firstValueFrom(genesisWallet.state());
+    // console.log('Genesis wallet state:', genesisState);
+    // console.log('Genesis wallet state type:', typeof genesisState);
+    // console.log('Genesis wallet state keys:', genesisState ? Object.keys(genesisState) : 'null/undefined');
+
+    const providers = await configureCombinedContractProviders(wallet, config.midnight);
     
-    const counterContract = await deployContract(contractService.getProviders(), {
+    const counterContract = await deployContract(providers, {
       contract: combinedContractInstance,
       privateStateId: CombinedContractPrivateStateId,
       initialPrivateState: { privateValue: 0 },
       args: [ownerSecretKeyBytes, ownerAddressBytes],
     });
     
-    logger.info(`Deployed contract at address: ${counterContract.deployTxData.public.contractAddress}`);
+    const contractAddress = counterContract.deployTxData.public.contractAddress;
+    logger.info(`Deployed contract at address: ${contractAddress}`);
     
     return res.status(200).json({
       success: true,
       data: {
-        contractAddress: counterContract.deployTxData.public.contractAddress,
+        contractAddress: contractAddress,
         message: 'Contract deployed successfully',
       },
     });

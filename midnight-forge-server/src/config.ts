@@ -51,12 +51,14 @@ export class TestnetRemoteConfig implements Config {
   }
 }
 
+const GENESIS_MINT_WALLET_SEED = '0000000000000000000000000000000000000000000000000000000000000001';
+
 export class LocalConfig implements Config {
   logDir = path.resolve(currentDir, '..', 'logs', 'local', `${new Date().toISOString()}.log`);
-  indexer = process.env.MIDNIGHT_INDEXER_URL || 'http://127.0.0.1:8088/api/v1/graphql';
-  indexerWS = process.env.MIDNIGHT_INDEXER_WS_URL || 'ws://127.0.0.1:8088/api/v1/graphql/ws';
-  node = process.env.MIDNIGHT_NODE_URL || 'http://127.0.0.1:9944';
-  proofServer = process.env.MIDNIGHT_PROOF_SERVER_URL || 'http://127.0.0.1:6300';
+  indexer = 'http://127.0.0.1:8088/api/v1/graphql';
+  indexerWS = 'ws://127.0.0.1:8088/api/v1/graphql/ws';
+  node = 'http://127.0.0.1:9944';
+  proofServer = 'http://127.0.0.1:6300';
   
   constructor() {
     setNetworkId(NetworkId.Undeployed);
@@ -76,7 +78,7 @@ export const getServerConfig = (): ServerConfig => {
     nodeEnv,
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     logLevel: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
-    walletSeed: walletSeed,
+    walletSeed: isLocal ? GENESIS_MINT_WALLET_SEED : walletSeed,
     walletFilename: process.env.WALLET_FILENAME || 'server_wallet.dat',
     midnight: isLocal ? new LocalConfig() : new TestnetRemoteConfig(),
   };

@@ -9,7 +9,8 @@
     "start": "tsc && node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "lint": "eslint src/**/*.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx test-deploy.ts"
   },
   "dependencies": {
     "express": "^4.18.2",

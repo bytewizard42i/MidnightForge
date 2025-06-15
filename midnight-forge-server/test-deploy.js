@@ -17,6 +17,7 @@ const testDeploy = async () => {
     console.log('Response body:', JSON.stringify(result, null, 2));
   } catch (error) {
     console.error('Test failed:', error);
+    console.log('Error:', error.message);
   }
 };
 

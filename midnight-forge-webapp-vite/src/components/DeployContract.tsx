@@ -1,70 +1,72 @@
 import React, { useState } from 'react';
 import styles from './DeployContract.module.css';
+import { useMidnightForgeDeployment } from '../hooks/useMidnightForge';
 
 interface DeployContractProps {
-  onDeploySuccess: () => void;
+  onDeploySuccess: (contractAddress: string) => void;
 }
 
 const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
+  // Form state - back to original fields
   const [contractName, setContractName] = useState<string>('DIDz NFT Contract');
   const [contractSymbol, setContractSymbol] = useState<string>('DIDZ');
   const [maxSupply, setMaxSupply] = useState<string>('10000');
+  
+  // API integration
+  const { 
+    deployContract, 
+    lastDeployment, 
+    isDeploying, 
+    deploymentError, 
+    clearDeploymentError,
+    lastContractAddress 
+  } = useMidnightForgeDeployment();
+
+  // Local state
   const [deploymentStatus, setDeploymentStatus] = useState<string>('');
-  const [isDeploying, setIsDeploying] = useState<boolean>(false);
-  const [deployedAddress, setDeployedAddress] = useState<string>('');
-  const [error, setError] = useState<string>('');
 
   const handleDeploy = async () => {
     console.log('Deploy button clicked!');
     
     if (!contractName.trim()) {
-      setError('Contract name is required');
       return;
     }
     
     if (!contractSymbol.trim()) {
-      setError('Contract symbol is required');
       return;
     }
 
     if (!maxSupply || parseInt(maxSupply) <= 0) {
-      setError('Max supply must be a positive number');
       return;
     }
 
-    console.log('Starting deployment...');
-    setIsDeploying(true);
-    setError('');
-    setDeploymentStatus('Preparing contract deployment...');
+    console.log('Starting real deployment...');
+    clearDeploymentError();
+    setDeploymentStatus('Connecting to Midnight Forge Server...');
 
     try {
-      // Simulate deployment process
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setDeploymentStatus('Compiling smart contract...');
+      setDeploymentStatus('Preparing contract deployment...');
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setDeploymentStatus('Deploying to Midnight network...');
-      
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setDeploymentStatus('Verifying deployment...');
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate successful deployment
-      const mockAddress = '0x' + Math.random().toString(16).substr(2, 40);
-      setDeployedAddress(mockAddress);
-      setDeploymentStatus(`✅ Contract deployed successfully!`);
-      
-      // Call success callback after a short delay
-      setTimeout(() => {
-        onDeploySuccess();
-      }, 1500);
+      // Use hardcoded genesis values for the API call
+      const result = await deployContract({
+        ownerSecretKey: '0000000000000000000000000000000000000000000000000000000000000001',
+        ownerAddress: '0000000000000000000000000000000000000000000000000000000000000001',
+      });
+
+      if (result.success && result.data?.contractAddress) {
+        setDeploymentStatus(`✅ Contract deployed successfully!`);
+        
+        // Call success callback with the real contract address
+        setTimeout(() => {
+          onDeploySuccess(result.data!.contractAddress);
+        }, 1500);
+      } else {
+        setDeploymentStatus(`❌ Deployment failed: ${result.error || 'Unknown error'}`);
+      }
       
     } catch (err: any) {
-      setError('Deployment failed: ' + err.message);
-      setDeploymentStatus('❌ Deployment failed');
-    } finally {
-      setIsDeploying(false);
+      console.error('Deployment error:', err);
+      setDeploymentStatus(`❌ Deployment failed: ${err.message}`);
     }
   };
 
@@ -73,9 +75,10 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
     setContractSymbol('DIDZ');
     setMaxSupply('10000');
     setDeploymentStatus('');
-    setDeployedAddress('');
-    setError('');
+    clearDeploymentError();
   };
+
+  const isFormValid = contractName.trim() && contractSymbol.trim() && maxSupply && parseInt(maxSupply) > 0;
 
   return (
     <div className={styles.deployContainer}>
@@ -84,7 +87,7 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
         <p>Configure and deploy your smart contract to the Midnight blockchain</p>
       </div>
 
-      {!deployedAddress ? (
+      {!lastContractAddress ? (
         <form onSubmit={(e) => { e.preventDefault(); handleDeploy(); }} className={styles.deployForm}>
           <div className={styles.formGroup}>
             <label htmlFor="contractName">Contract Name</label>
@@ -127,31 +130,34 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
             />
           </div>
 
-          {error && (
+          {/* Error Display */}
+          {deploymentError && (
             <div className={styles.errorMessage}>
-              {error}
+              {deploymentError}
             </div>
           )}
 
+          {/* Deploy Button */}
           <button
             type="button"
             onClick={handleDeploy}
-            disabled={isDeploying}
+            disabled={isDeploying || !isFormValid}
             className={`${styles.deployButton} ${isDeploying ? styles.deploying : ''}`}
           >
             {isDeploying ? (
               <>
                 <div className={styles.spinner}></div>
-                Deploying...
+                Deploying to Midnight...
               </>
             ) : (
               '🚀 Deploy Contract'
             )}
           </button>
 
-          {deploymentStatus && (
+          {/* Status Message */}
+          {(deploymentStatus || isDeploying) && (
             <div className={styles.statusMessage}>
-              {deploymentStatus}
+              {deploymentStatus || 'Preparing deployment...'}
             </div>
           )}
         </form>
@@ -171,8 +177,13 @@ const DeployContract: React.FC<DeployContractProps> = ({ onDeploySuccess }) => {
             </div>
             <div className={styles.detailItem}>
               <strong>Contract Address:</strong>
-              <code className={styles.address}>{deployedAddress}</code>
+              <code className={styles.address}>{lastContractAddress}</code>
             </div>
+            {lastDeployment?.data && (
+              <div className={styles.detailItem}>
+                <strong>Deployment Message:</strong> {lastDeployment.data.message}
+              </div>
+            )}
           </div>
           <p className={styles.nextStepMessage}>
             🎯 Great! Now you can proceed to create NFT metadata
