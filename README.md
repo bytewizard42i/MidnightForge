@@ -6,26 +6,31 @@
 
 ## 📖 Table of Contents
 1. [✨ Overview](#-overview)
-2. [🌟 Goals](#-goals)
-3. [🚀 Key Features](#-key-features)
-4. [📂 Repository Structure](#-repository-structure)
-5. [🛠️ Getting Started](#️-getting-started)
-6. [⚡ Build & Compile](#-build--compile)
-7. [🚀 Deployment](#-deployment)
-8. [💡 Automated DID Workflow](#-automated-did-workflow)
-9. [🔍 AI-Powered Collaboration](#-ai-powered-collaboration)
-10. [💻 Usage Example](#-usage-example)
-11. [🧪 Testing](#-testing)
-12. [📚 Examples](#-examples)
-13. [📝 Next Steps](#-next-steps)
-14. [🤝 Contributing](#-contributing)
-15. [📜 License](#-license)
-16. [🙏 Acknowledgements](#-acknowledgements)
+2. [🚀 Quick Start](#-quick-start)
+3. [🛠️ Prerequisites](#️-prerequisites)
+4. [📦 Installation](#-installation)
+5. [🔐 Secrets Setup](#-secrets-setup)
+6. [⚡ Running the Application](#-running-the-application)
+7. [🌟 Goals](#-goals)
+8. [🚀 Key Features](#-key-features)
+9. [📂 Repository Structure](#-repository-structure)
+10. [⚡ Build & Compile](#-build--compile)
+11. [🚀 Deployment](#-deployment)
+12. [💡 Automated DID Workflow](#-automated-did-workflow)
+13. [🔍 AI-Powered Collaboration](#-ai-powered-collaboration)
+14. [💻 Usage Example](#-usage-example)
+15. [🧪 Testing](#-testing)
+16. [📚 Examples](#-examples)
+17. [🔧 Troubleshooting](#-troubleshooting)
+18. [📝 Next Steps](#-next-steps)
+19. [🤝 Contributing](#-contributing)
+20. [📜 License](#-license)
+21. [🙏 Acknowledgements](#-acknowledgements)
 
 ---
 
 ## ✨ Overview
-**MidnightForge** is a modular, protocol-level wallet system on Cardano’s Midnight selective-privacy blockchain. It enables:
+**MidnightForge** is a modular, protocol-level wallet system on Cardano's Midnight selective-privacy blockchain. It enables:
 
 - 🔒 **Privacy-Preserving DID NFTs** for verifiable credentials
 - 📂 **Protocol level wallets with Folder-Based Smart Contracts** with pluggable logic per folder
@@ -33,6 +38,144 @@
 - ⚙️ **Seamless Integration** with Midnight Lace, CLI tools, and front-end SDKs
 
 From **learning** to **earning**, MidnightForge orchestrates DID authorization, proof-of-participation, reputation, and micro-payments through an end-to-end workflow.
+
+---
+
+## 🚀 Quick Start
+
+Get MidnightForge running in 3 steps:
+
+```bash
+# 1. Clone and install
+git clone https://github.com/bytewizard42i/MidnightForge.git
+cd MidnightForge
+npm install
+
+# 2. Setup secrets (get key.txt from team member first)
+npm run secrets:setup
+
+# 3. Start everything
+npm run quickstart
+```
+
+**That's it!** 🎉 Your application will be available at:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3001
+
+---
+
+## 🛠️ Prerequisites
+
+### Required Software
+- **Node.js** ≥ v22.15 ([Download](https://nodejs.org/))
+- **Docker** & **Docker Compose** ([Download](https://docs.docker.com/get-docker/))
+
+### Required Tools (for secrets management)
+- **SOPS** & **age** for encrypted environment variables
+
+```bash
+# macOS
+brew install sops age
+
+# Ubuntu/Debian
+sudo apt install sops age
+```
+
+---
+
+## 📦 Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/bytewizard42i/MidnightForge.git
+cd MidnightForge
+
+# Install all dependencies
+npm install
+```
+
+---
+
+## 🔐 Secrets Setup
+
+MidnightForge uses encrypted environment variables for security.
+
+### For New Developers
+
+1. **Get the encryption key** from a team member and save it as `key.txt` in the project root
+2. **Run the setup**:
+   ```bash
+   npm run secrets:setup
+   ```
+
+### For Existing Team Members
+
+```bash
+# Get latest secrets
+npm run secrets:decrypt
+```
+
+### Available Commands
+
+```bash
+npm run secrets:setup     # Initial setup for new developers
+npm run secrets:encrypt   # Encrypt secrets after editing
+npm run secrets:decrypt   # Decrypt latest secrets
+npm run secrets:edit      # Edit encrypted secrets directly
+```
+
+> **📚 For detailed secrets management:** See [SECRETS.md](./SECRETS.md)
+
+---
+
+## ⚡ Running the Application
+
+### Full Stack (Recommended)
+
+```bash
+# Start blockchain + backend + frontend
+npm run quickstart
+```
+
+This starts:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3001
+- **Blockchain Infrastructure**: Indexer (8088), Node (9944), Proof Server (6300)
+
+### Development Mode
+
+```bash
+# Start applications only (requires blockchain running separately)
+npm run apps:dev
+
+# Start blockchain infrastructure only
+npm run blockchain:start
+```
+
+### Individual Components
+
+```bash
+# Backend server
+npm run server:dev
+
+# Frontend webapp
+npm run webapp:dev
+
+# Blockchain services
+npm run blockchain:start
+```
+
+### Stopping Services
+
+```bash
+# Stop applications (blockchain keeps running)
+Ctrl+C
+
+# Stop blockchain infrastructure
+npm run blockchain:stop
+```
+
+> **📚 For detailed standalone setup:** See [STANDALONE.md](./STANDALONE.md)
 
 ---
 
@@ -67,132 +210,43 @@ From **learning** to **earning**, MidnightForge orchestrates DID authorization, 
 ## 📂 Repository Structure
 ```text
 MidnightForge/
-├── .github/                 # CI workflows & PR templates
-├── CHANGELOG.md
-├── CODE_OF_CONDUCT.md
-├── COMPILER_SETUP.md        # Documentation for Compact compiler setup
-├── CONTRIBUTING.md
-├── DEVELOPMENT.md           # Comprehensive development guide
-├── LICENSE
-├── README.md
-├── dev.sh                   # Development helper script
-├── package.json
-├── source-control-helper.sh # Git repository management script
-├── tsconfig.json
-├── vitest.config.ts
-│
 ├── contract/                # Smart-contract code & SDK
-│   ├── package.json         # Contract-specific dependencies and scripts
-│   ├── .gitignore           # Contract-specific ignored files
-│   ├── src/
-│   │   ├── contracts/
-│   │   │   ├── 01_protocol_wallet_base/
-│   │   │   │   └── protocol_wallet_base.compact  # Core on-chain primitives
-│   │   │   ├── 02_protocol_wallet/
-│   │   │   │   ├── protocol_wallet.compact       # Folder registry management
-│   │   │   │   ├── protocol_wallet_folder_contract.compact  # Per-folder permissions
-│   │   │   │   └── protocol_wallet_issuer_contract.compact  # Trusted issuer registry
-│   │   │   └── 03_DIDz_NFTs/
-│   │   │       └── DIDz_NFT_contract.compact     # ZK-powered DID NFTs
-│   │   ├── counter.compact  # Simple counter example contract
-│   │   ├── minimal.compact  # Minimal example contract
-│   │   ├── test.compact     # Test contract
-│   │   ├── index.ts         # JS/TS SDK exports
-│   │   ├── witnesses.ts     # Private state type definitions
-│   │   ├── managed/         # Generated files (ignored by git)
-│   │   │   ├── counter/     # Compiled counter contract
-│   │   │   ├── minimal/     # Compiled minimal contract
-│   │   │   └── test/        # Compiled test contract
-│   │   └── test/           # Test suite for contracts
-│   │       ├── 01_protocol_wallet_base.test.ts
-│   │       ├── 02_protocol_wallet/
-│   │       │   ├── folder_contract.test.ts
-│   │       │   ├── issuer_contract.test.ts
-│   │       │   └── protocol_wallet.test.ts
-│   │       ├── 03_privacy_did_nft.test.ts
-│   │       ├── counter-simulator.ts
-│   │       ├── counter.test.ts
-│   │       └── mocks/      # Mock implementations for testing
-│   │           ├── compact-runtime.ts
-│   │           ├── midnight-js-network-id.ts
-│   │           └── midnight-js-testing.ts
-│   ├── dist/               # Build output (ignored by git)
-│   └── reports/            # Test reports (ignored by git)
-│
-├── counter-cli/             # CLI for example counter & protocol testing
-│   ├── package.json
-│   └── src/
-│       ├── index.ts
-│       └── test/           # CLI tests
-│
-├── scripts/                 # Shell helpers
-│   └── deploy.sh
-│
-└── cleanup-branches.sh      # Script to clean up Git branches
+│   ├── src/contracts/       # Compact contracts
+│   └── src/managed/         # Generated files (ignored by git)
+├── midnight-forge-server/   # Backend API server
+├── midnight-forge-webapp-vite/ # Frontend React application
+├── counter-cli/             # CLI for contract interaction
+├── .sops.yaml              # Secrets encryption config (safe to commit)
+├── setup-secrets.sh        # Secrets management script
+└── start-standalone.sh     # Quick start script
 ```
-
----
-
-## 🛠️ Getting Started
-### Prerequisites
-- **Node.js** ≥ v16.x & **npm**/yarn
-- **CompactC** compiler (v1.x.x) in PATH
-- **Cardano Node** & **Ogmius** for local testnet
-
-### Installation
-```bash
-# Clone and install dependencies
-git clone https://github.com/bytewizard42i/MidnightForge.git
-cd MidnightForge
-npm install
-
-# Setup encrypted secrets (first time)
-npm run secrets:setup
-```
-
-> **🔐 Secrets Management**: This project uses SOPS + age for encrypted environment variables. See [SECRETS.md](./SECRETS.md) for detailed setup instructions.
-
-### 🚀 Quick Start - Standalone Mode
-Run the complete application stack (blockchain + backend + frontend):
-
-```bash
-# Option 1: Using npm scripts
-npm run standalone
-
-# Option 2: Using the convenient shell script
-./start-standalone.sh
-
-# Option 3: Background mode
-npm run standalone:detached
-```
-
-This will start:
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:3001
-- **Blockchain Infrastructure**: Indexer (8088), Node (9944), Proof Server (6300)
-
-For detailed standalone setup instructions, see [STANDALONE.md](./STANDALONE.md).
 
 ---
 
 ## ⚡ Build & Compile
-The build process utilizes `run-compactc`, an internal wrapper script that leverages the `CompactC` compiler. Ensure the `CompactC` compiler (v1.x.x) is installed and set the `COMPACT_HOME` environment variable to the directory containing the `compactc` executable.
 
 ```bash
-npm run build:base     # Compile 01_protocol_wallet_base
-npm run build:wallet   # Compile 02_protocol_wallet
-npm run build:nft      # Compile 03_privacy_did_nft
-npm run build          # All layers in order
+# Build everything
+npm run build:all
+
+# Build individual components
+npm run contract:build    # Compile smart contracts
+npm run server:build      # Build backend server
+npm run webapp:build      # Build frontend webapp
 ```
+
+> **📚 For contract development:** See [COMPILER_SETUP.md](./COMPILER_SETUP.md) and [DEVELOPMENT.md](./DEVELOPMENT.md)
 
 ---
 
 ## 🚀 Deployment
+
 ```bash
-# Deploy contracts & bots via mesh.js
-npm run deploy
-# Or use the shell script
-./scripts/deploy.sh
+# Deploy using Docker Compose
+npm run standalone
+
+# Deploy in detached mode
+npm run standalone:detached
 ```
 
 ---
@@ -202,7 +256,7 @@ npm run deploy
 2. **Assess**: Bot issues learning quests; mints DID NFT upon completion.
 3. **Collaborate**: AI engine assigns issues to qualified users.
 4. **Verify**: Verifier bot checks DID proofs on PRs and updates reputation.
-5. **Compensate**: Smart contracts release escrowed payments to contributor’s DID wallet.
+5. **Compensate**: Smart contracts release escrowed payments to contributor's DID wallet.
 
 ---
 
@@ -247,6 +301,39 @@ Browse `/examples/basic-demo.ts` for a step-by-step walkthrough:
 2. Deploy folder & NFT contracts
 3. Register issuers & mint credentials
 4. On-chain interactions via CLI/SDK
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**"Secrets file not found"**
+```bash
+npm run secrets:setup
+```
+
+**"Docker not running"**
+```bash
+# Start Docker Desktop or Docker daemon
+docker info  # Check if Docker is running
+```
+
+**"Port already in use"**
+```bash
+# Stop existing services
+npm run blockchain:stop
+npm run standalone:stop
+```
+
+**Environment variables not loading**
+```bash
+# Check if secrets are decrypted
+ls -la .env.secrets
+
+# Re-decrypt if needed
+npm run secrets:decrypt
+```
 
 ---
 
