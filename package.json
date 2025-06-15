@@ -35,7 +35,12 @@
     "build:all": "npm run contract:build && npm run server:build && npm run webapp:build",
     "contract:build": "cd contract && npm run compact:combinedContract && npm run build:combinedContract",
     "server:build": "cd midnight-forge-server && npm run build",
-    "webapp:build": "cd midnight-forge-webapp-vite && npm run build"
+    "webapp:build": "cd midnight-forge-webapp-vite && npm run build",
+    "secrets:setup": "./setup-secrets.sh setup",
+    "secrets:encrypt": "./setup-secrets.sh encrypt",
+    "secrets:decrypt": "./setup-secrets.sh decrypt",
+    "secrets:edit": "./setup-secrets.sh edit",
+    "secrets:help": "./setup-secrets.sh help"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",

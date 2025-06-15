@@ -145,7 +145,12 @@ MidnightForge/
 git clone https://github.com/bytewizard42i/MidnightForge.git
 cd MidnightForge
 npm install
+
+# Setup encrypted secrets (first time)
+npm run secrets:setup
 ```
+
+> **🔐 Secrets Management**: This project uses SOPS + age for encrypted environment variables. See [SECRETS.md](./SECRETS.md) for detailed setup instructions.
 
 ### 🚀 Quick Start - Standalone Mode
 Run the complete application stack (blockchain + backend + frontend):

@@ -39,6 +39,16 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
+.env.local
+.env.*.local
+.env.secrets
+
+# Allow specific env files for SOPS encryption
+!.env.example
+!.env.secrets.enc
+
+# SOPS encryption key (DO NOT COMMIT)
+key.txt
 
 # MacOS
 .DS_Store

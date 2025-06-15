@@ -2,9 +2,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import dotenv from 'dotenv';
+import { existsSync } from 'fs';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from encrypted secrets
+const secretsPath = path.resolve(process.cwd(), '.env.secrets');
+if (existsSync(secretsPath)) {
+  dotenv.config({ path: secretsPath });
+  console.log('✅ Loaded encrypted secrets');
+} else {
+  console.warn('⚠️  Encrypted secrets not found, using default environment variables');
+  console.warn('   Run: npm run secrets:setup');
+  dotenv.config(); // Fallback to default .env
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
