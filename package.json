@@ -11,6 +11,7 @@
     "midnight-forge-webapp-vite"
   ],
   "scripts": {
+    "quickstart": "./start-standalone.sh",
     "standalone": "docker compose -f docker-compose.standalone.yml up --build",
     "standalone:hybrid": "npm run contract:build && docker compose -f docker-compose.standalone-hybrid.yml up --build",
     "standalone:detached": "docker compose -f docker-compose.standalone.yml up -d --build",
