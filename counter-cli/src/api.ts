@@ -18,7 +18,7 @@
 import { type ContractAddress, StateValue } from '@midnight-ntwrk/compact-runtime';
 import {
   CombinedContract,
-  CombinedContractPrivateState,
+  type CombinedContractPrivateState,  
   Counter,
   type CounterPrivateState,
   witnesses,
@@ -49,9 +49,9 @@ import {
   type CounterProviders,
   type DeployedCounterContract,
   CombinedContractPrivateStateId,
-  DeployedCombinedContractContract,
-  CombinedContractProviders,
-  CombinedContractContract,
+  type DeployedCombinedContractContract,
+  type CombinedContractProviders,
+  type CombinedContractContract,
 } from './common-types';
 import { combinedContractConfig, type Config, contractConfig } from './config';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
@@ -312,7 +312,7 @@ export const displayCombinedContractOwnerKey = async (
     { ledger: CombinedContract.ledger },
     (ledgerState) => ledgerState.ownerKey,
     'Checking combined contract owner key...',
-    (value, contractAddress) => `Owner key: ${toHex(value as Uint8Array)}`,
+    (value, _contractAddress) => `Owner key: ${toHex(value as Uint8Array)}`,
     (contractAddress) => `There is no combined contract deployed at ${contractAddress}.`,
   );
   const ownerKey = ownerKeyBytes !== null ? toHex(ownerKeyBytes as Uint8Array) : null;
@@ -329,7 +329,7 @@ export const displayCombinedContractOwnerAddress = async (
     { ledger: CombinedContract.ledger },
     (ledgerState) => ledgerState.ownerAddress,
     'Checking combined contract owner address...',
-    (value, contractAddress) => `Owner address: ${value}`,
+    (value, _contractAddress) => `Owner address: ${value}`,
     (contractAddress) => `There is no combined contract deployed at ${contractAddress}.`,
   );
   return { contractAddress, ownerAddress };

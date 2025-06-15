@@ -88,6 +88,7 @@ describe('Combined DIDz Wallet', () => {
     expect(fetchedDIDzNFT.did).toEqual(didBytes);
   });
 
+  // BUG: https://github.com/bytewizard42i/MidnightForge/issues/29
   it('should transfer a DIDz NFT', async () => {
     // Mint a new NFT to transfer
     const initialMetadataHash = await generateMetadataHash('{"name":"Transfer Test NFT","description":"NFT for transfer test"}');
@@ -170,7 +171,6 @@ describe('Combined DIDz Wallet', () => {
 
     // await anotherWallet.close();
   });
-
   it.skip('should not mint a DIDz NFT if not owner', async () => {
 
     const metadataHash = await generateMetadataHash('{"name":"DIDz NFT","description":"A DIDz NFT","image":"https://example.com/image.png"}');

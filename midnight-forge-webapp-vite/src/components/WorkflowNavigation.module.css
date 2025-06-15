@@ -1,0 +1,283 @@
+.workflowContainer {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.workflowHeader {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 40px;
+}
+
+.workflowTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--midnight-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+  text-shadow: 0 0 30px rgba(114, 9, 183, 0.3);
+}
+
+.workflowSubtitle {
+  font-size: 1.1rem;
+  color: var(--midnight-text-secondary);
+  margin: 0;
+  font-weight: 400;
+}
+
+.stepperContainer {
+  background: var(--midnight-card);
+  border: 1px solid var(--midnight-border);
+  border-radius: 16px;
+  padding: 30px;
+  margin: 0 20px 30px 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 30px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(114, 9, 183, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stepWrapper {
+  position: relative;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid var(--midnight-border);
+  background: var(--midnight-surface);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--midnight-gradient);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.step:hover:not(.locked) {
+  border-color: var(--midnight-accent);
+  background: var(--midnight-secondary);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 20px rgba(114, 9, 183, 0.3),
+    0 0 40px rgba(114, 9, 183, 0.1);
+}
+
+.step:hover:not(.locked)::before {
+  opacity: 0.1;
+}
+
+.step.active {
+  border-color: var(--midnight-accent);
+  background: var(--midnight-gradient);
+  color: var(--midnight-text);
+  box-shadow: 
+    0 8px 25px rgba(114, 9, 183, 0.4),
+    0 0 40px rgba(114, 9, 183, 0.2);
+}
+
+.step.completed {
+  border-color: var(--midnight-success);
+  background: linear-gradient(135deg, var(--midnight-success) 0%, #059669 100%);
+  color: var(--midnight-text);
+  box-shadow: 
+    0 8px 25px rgba(16, 185, 129, 0.3),
+    0 0 40px rgba(16, 185, 129, 0.1);
+}
+
+.step.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--midnight-surface);
+  border-color: var(--midnight-border);
+}
+
+.stepIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  background: rgba(248, 250, 252, 0.1);
+  margin-right: 20px;
+  flex-shrink: 0;
+  border: 2px solid rgba(248, 250, 252, 0.2);
+}
+
+.step:not(.active):not(.completed) .stepIcon {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--midnight-text-muted);
+  border-color: var(--midnight-border);
+}
+
+.step.active .stepIcon,
+.step.completed .stepIcon {
+  background: rgba(248, 250, 252, 0.2);
+  border-color: rgba(248, 250, 252, 0.3);
+}
+
+.stepInfo {
+  flex: 1;
+}
+
+.stepTitle {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: inherit;
+}
+
+.stepDescription {
+  font-size: 0.95rem;
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.4;
+  color: inherit;
+}
+
+.step:not(.active):not(.completed) .stepTitle {
+  color: var(--midnight-text-secondary);
+}
+
+.step:not(.active):not(.completed) .stepDescription {
+  color: var(--midnight-text-muted);
+}
+
+.lockIcon {
+  font-size: 20px;
+  margin-left: 15px;
+  opacity: 0.7;
+  color: var(--midnight-text-muted);
+}
+
+.stepConnector {
+  width: 4px;
+  height: 30px;
+  background: var(--midnight-border);
+  margin: 0 auto;
+  border-radius: 2px;
+  transition: background 0.3s ease;
+  position: relative;
+}
+
+.stepConnector::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--midnight-gradient);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stepConnector.connectorCompleted::before {
+  opacity: 1;
+}
+
+.mainContent {
+  background: var(--midnight-card);
+  border: 1px solid var(--midnight-border);
+  border-radius: 16px;
+  padding: 40px;
+  margin: 0 20px 30px 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 30px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(114, 9, 183, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+.progressBar {
+  height: 6px;
+  background: var(--midnight-surface);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 20px auto 0 auto;
+  max-width: 1200px;
+  width: calc(100% - 40px);
+  border: 1px solid var(--midnight-border);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--midnight-gradient);
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 20px rgba(114, 9, 183, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .workflowContainer {
+    padding: 15px;
+  }
+  
+  .workflowTitle {
+    font-size: 2rem;
+  }
+  
+  .stepperContainer {
+    padding: 20px;
+  }
+  
+  .step {
+    padding: 15px;
+  }
+  
+  .stepIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    margin-right: 15px;
+  }
+  
+  .stepTitle {
+    font-size: 1.1rem;
+  }
+  
+  .stepDescription {
+    font-size: 0.9rem;
+  }
+  
+  .mainContent {
+    padding: 25px;
+  }
+} 
