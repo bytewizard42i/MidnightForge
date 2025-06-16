@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@midnight-ntwrk/compact": "file:../compact",
-    "eslint": "^9.28.0",
+    "eslint": "^9.29.0",
     "jest": "^30.0.0",
     "typescript": "^5.2.2"
   }
