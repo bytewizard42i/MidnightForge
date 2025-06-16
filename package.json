@@ -5,7 +5,6 @@
   "type": "module",
   "license": "Apache-2.0",
   "workspaces": [
-    "counter-cli",
     "contract",
     "compact",
     "midnight-forge-server",
@@ -19,8 +18,7 @@
     "standalone:stop": "docker compose -f docker-compose.standalone.yml down",
     "standalone:stop-hybrid": "docker compose -f docker-compose.standalone-hybrid.yml down",
     "standalone:clean": "docker compose -f docker-compose.standalone.yml down --volumes --remove-orphans",
-    "standalone:dev": "concurrently \"npm run server:dev\" \"npm run webapp:dev\"",
-    "standalone:infra": "cd counter-cli && docker compose -f standalone.yml up -d",
+        "standalone:dev": "concurrently \"npm run server:dev\" \"npm run webapp:dev\"",
     "blockchain:start": "docker compose -f docker-compose.blockchain.yml up -d",
     "blockchain:stop": "docker compose -f docker-compose.blockchain.yml down",
     "blockchain:restart": "docker compose -f docker-compose.blockchain.yml restart",
