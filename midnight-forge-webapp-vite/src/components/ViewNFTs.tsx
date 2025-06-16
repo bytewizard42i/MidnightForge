@@ -166,33 +166,160 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
   const renderMutabilityPanel = () => {
     if (!selectedNft || !showMutabilityPanel) return null;
 
+    const handleMockAction = (actionName: string, description: string) => {
+      alert(`🚧 MOCK ACTION: ${actionName}\n\n${description}\n\nThis is a placeholder - actual implementation coming soon!`);
+    };
+
     return (
       <div className={styles.mutabilityPanel}>
-        <h3>🔧 NFT Mutability Actions</h3>
-        <div className={styles.mutabilityActions}>
-          <button 
-            className={`${styles.actionButton} ${styles.updateMetadata}`}
-            onClick={() => alert('Update Metadata feature coming soon!')}
-          >
-            📝 Update Metadata
-          </button>
-          <button 
-            className={`${styles.actionButton} ${styles.transferNft}`}
-            onClick={() => alert('Transfer NFT feature coming soon!')}
-          >
-            🔄 Transfer Ownership
-          </button>
-          <button 
-            className={`${styles.actionButton} ${styles.burnNft}`}
-            onClick={() => alert('Burn NFT feature coming soon!')}
-          >
-            🔥 Burn NFT
-          </button>
+        <h3>🔧 NFT Management Actions</h3>
+        
+        {/* Metadata Management */}
+        <div className={styles.actionSection}>
+          <h4>📝 Metadata Management</h4>
+          <div className={styles.mutabilityActions}>
+            <button 
+              className={`${styles.actionButton} ${styles.updateMetadata}`}
+              onClick={() => handleMockAction('Update Metadata', 
+                'Would call updateDIDzNFTMetadata circuit to:\n• Upload new metadata to IPFS\n• Update metadata hash on-chain\n• Verify ownership before update')}
+            >
+              📝 Update Metadata
+            </button>
+            <button 
+              className={`${styles.actionButton} ${styles.updateImage}`}
+              onClick={() => handleMockAction('Update Image', 
+                'Would allow updating just the image:\n• Upload new image to IPFS\n• Update metadata with new image CID\n• Preserve other metadata fields')}
+            >
+              🖼️ Update Image
+            </button>
+            <button 
+              className={`${styles.actionButton} ${styles.updateAttributes}`}
+              onClick={() => handleMockAction('Update Attributes', 
+                'Would allow modifying NFT attributes:\n• Edit trait types and values\n• Add new attributes\n• Remove existing attributes')}
+            >
+              🏷️ Edit Attributes
+            </button>
+          </div>
         </div>
-        <p className={styles.mutabilityNote}>
-          💡 These mutability features will be implemented in the next phase. 
-          They will use the smart contract's updateDIDzNFTMetadata, transferDIDzNFT, and burnDIDzNFT circuits.
-        </p>
+
+        {/* Ownership Management */}
+        <div className={styles.actionSection}>
+          <h4>👤 Ownership Management</h4>
+          <div className={styles.mutabilityActions}>
+            <button 
+              className={`${styles.actionButton} ${styles.transferNft}`}
+              onClick={() => handleMockAction('Transfer Ownership', 
+                'Would call transferDIDzNFT circuit to:\n• Verify current ownership\n• Transfer to new DID and address\n• Update ownership mappings')}
+            >
+              🔄 Transfer NFT
+            </button>
+            <button 
+              className={`${styles.actionButton} ${styles.delegateAccess}`}
+              onClick={() => handleMockAction('Delegate Access', 
+                'Would set temporary access permissions:\n• Grant specific permissions\n• Set time-limited access\n• Maintain ownership')}
+            >
+              👥 Delegate Access
+            </button>
+            <button 
+              className={`${styles.actionButton} ${styles.revokeAccess}`}
+              onClick={() => handleMockAction('Revoke Access', 
+                'Would remove delegated permissions:\n• Revoke specific permissions\n• Cancel time-limited access\n• Restore full owner control')}
+            >
+              🚫 Revoke Access
+            </button>
+          </div>
+        </div>
+
+        {/* Advanced Actions */}
+        <div className={styles.actionSection}>
+          <h4>⚙️ Advanced Actions</h4>
+          <div className={styles.mutabilityActions}>
+            <button 
+              className={`${styles.actionButton} ${styles.freezeNft}`}
+              onClick={() => handleMockAction('Freeze NFT', 
+                'Would make NFT temporarily immutable:\n• Prevent transfers\n• Lock metadata changes\n• Maintain visibility')}
+            >
+              🧊 Freeze NFT
+            </button>
+            <button 
+              className={`${styles.actionButton} ${styles.unfreezeNft}`}
+              onClick={() => handleMockAction('Unfreeze NFT', 
+                'Would restore NFT mutability:\n• Re-enable transfers\n• Allow metadata updates\n• Restore full functionality')}
+            >
+              🔥 Unfreeze NFT
+            </button>
+            <button 
+              className={`${styles.actionButton} ${styles.burnNft}`}
+              onClick={() => handleMockAction('Burn NFT', 
+                'Would permanently destroy this NFT:\n⚠️ IRREVERSIBLE ACTION\n• Remove from contract\n• Clear all mappings\n• Cannot be undone')}
+            >
+              🔥 Burn NFT
+            </button>
+          </div>
+        </div>
+
+        {/* DID Management */}
+        <div className={styles.actionSection}>
+          <h4>🆔 DID Management</h4>
+          <div className={styles.mutabilityActions}>
+            <button 
+              className={`${styles.actionButton} ${styles.updateDid}`}
+              onClick={() => handleMockAction('Update DID', 
+                'Would update the associated DID:\n• Generate new DID\n• Maintain ownership\n• Update DID mappings')}
+            >
+              🆔 Update DID
+            </button>
+            <button 
+              className={`${styles.actionButton} ${styles.linkExternalDid}`}
+              onClick={() => handleMockAction('Link External DID', 
+                'Would link to external DID system:\n• Connect to other DID networks\n• Maintain cross-chain identity\n• Enable interoperability')}
+            >
+              🔗 Link External DID
+            </button>
+          </div>
+        </div>
+
+        {/* Current NFT Info Summary */}
+        <div className={styles.nftSummary}>
+          <h4>🔍 Current NFT Status</h4>
+          <div className={styles.statusGrid}>
+            <div className={styles.statusItem}>
+              <span className={styles.statusLabel}>Status:</span>
+              <span className={styles.statusValue}>✅ Active</span>
+            </div>
+            <div className={styles.statusItem}>
+              <span className={styles.statusLabel}>Transferable:</span>
+              <span className={styles.statusValue}>✅ Yes</span>
+            </div>
+            <div className={styles.statusItem}>
+              <span className={styles.statusLabel}>Mutable:</span>
+              <span className={styles.statusValue}>✅ Yes</span>
+            </div>
+            <div className={styles.statusItem}>
+              <span className={styles.statusLabel}>Last Updated:</span>
+              <span className={styles.statusValue}>At mint</span>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.implementationNote}>
+          <h4>🚧 Implementation Status</h4>
+          <p>
+            <strong>These are MOCK ACTIONS for UI demonstration purposes.</strong>
+          </p>
+          <p>
+            The actual implementations will use the smart contract circuits:
+          </p>
+          <ul>
+            <li><code>updateDIDzNFTMetadata()</code> - Update metadata</li>
+            <li><code>transferDIDzNFT()</code> - Transfer ownership</li>
+            <li><code>burnDIDzNFT()</code> - Burn/destroy NFT</li>
+            <li>Additional circuits for freeze/unfreeze functionality</li>
+          </ul>
+          <p>
+            <em>Coming in the next development phase! 🚀</em>
+          </p>
+        </div>
       </div>
     );
   };
