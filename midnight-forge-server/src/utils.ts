@@ -129,3 +129,94 @@ export const generateRandomEd25519PublicKeyBytes = async (): Promise<Uint8Array>
   const exported = await webcrypto.subtle.exportKey("raw", keyPair.publicKey);
   return new Uint8Array(exported);
 };
+
+/**
+ * NFT Metadata interface matching the frontend structure
+ */
+export interface NFTMetadata {
+  name: string;
+  description: string;
+  image: string; // IPFS URI like "ipfs://Qm..."
+  attributes: Array<{
+    trait_type: string;
+    value: string | number;
+  }>;
+}
+
+/**
+ * Verifies that a metadata JSON string matches the expected hash
+ */
+export async function verifyMetadataHash(metadataJson: string, expectedHash: string): Promise<boolean> {
+  try {
+    const computedHashBytes = await generateMetadataHash(metadataJson);
+    const computedHash = toHex(computedHashBytes);
+    return computedHash.toLowerCase() === expectedHash.toLowerCase();
+  } catch (error) {
+    console.error('Error verifying metadata hash:', error);
+    return false;
+  }
+}
+
+/**
+ * Attempts to fetch metadata from IPFS using multiple gateways
+ */
+export async function fetchMetadataFromIPFS(ipfsUri: string): Promise<NFTMetadata | null> {
+  if (!ipfsUri.startsWith('ipfs://')) {
+    console.warn('Invalid IPFS URI format:', ipfsUri);
+    return null;
+  }
+
+  const cid = ipfsUri.replace('ipfs://', '');
+  const gateways = [
+    `https://ipfs.io/ipfs/${cid}`,
+    `https://nftstorage.link/ipfs/${cid}`,
+    `https://cloudflare-ipfs.com/ipfs/${cid}`,
+    `https://dweb.link/ipfs/${cid}`,
+  ];
+
+  for (const gateway of gateways) {
+    try {
+      console.log(`Attempting to fetch metadata from: ${gateway}`);
+      
+      // Use AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for IPFS
+      
+      const response = await fetch(gateway, { 
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const metadata = await response.json() as NFTMetadata;
+        console.log(`Successfully fetched metadata from: ${gateway}`);
+        return metadata;
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch from ${gateway}:`, error);
+      continue;
+    }
+  }
+
+  console.error(`Failed to fetch metadata from all gateways for CID: ${cid}`);
+  return null;
+}
+
+/**
+ * Enhanced NFT data with decoded metadata information
+ */
+export interface EnhancedNFTData {
+  nftId: number;
+  ownerAddress: string;
+  metadataHash: string;
+  metadataCID: string;
+  did: string;
+  // Optional decoded metadata (if available from IPFS)
+  metadata?: NFTMetadata;
+  metadataUri?: string; // IPFS URI if we can derive it
+  metadataVerified?: boolean; // Whether the metadata hash matches
+}

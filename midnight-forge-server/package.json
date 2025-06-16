@@ -11,8 +11,15 @@
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit",
     "test:deploy": "tsx test-deploy.ts",
-    "test:mint": "vitest tests/mint-nft.test.ts",
-    "test": "vitest tests/"
+    "test:mint": "vitest tests/mint-nft.test.ts 2>&1 | tee logs/mint-test-$(date +%Y%m%d-%H%M%S).log",
+    "test:list": "vitest tests/list-nfts.test.ts 2>&1 | tee logs/list-test-$(date +%Y%m%d-%H%M%S).log",
+    "test:metadata": "vitest tests/metadata-decoding.test.ts 2>&1 | tee logs/metadata-test-$(date +%Y%m%d-%H%M%S).log",
+    "test:list-metadata": "vitest tests/list-nfts.test.ts -t \"Metadata Functionality\" 2>&1 | tee logs/list-metadata-test-$(date +%Y%m%d-%H%M%S).log",
+    "test:list-only": "vitest tests/list-nfts.test.ts",
+    "test:metadata-only": "vitest tests/metadata-decoding.test.ts",
+    "test:list-metadata-only": "vitest tests/list-nfts.test.ts -t \"Metadata Functionality\" 2>&1 | tee logs/list-metadata-test-$(date +%Y%m%d-%H%M%S).log",
+    "test:list-metadata-no-log": "vitest tests/list-nfts.test.ts -t \"Metadata Functionality\"",
+    "test": "vitest tests/ 2>&1 | tee logs/all-tests-$(date +%Y%m%d-%H%M%S).log"
   },
   "dependencies": {
     "express": "^4.18.2",

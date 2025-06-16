@@ -28,9 +28,10 @@ interface NFTMetadata {
 
 interface CreateMetadataFormProps {
   contractAddress?: string; // Optional contract address from parent
+  onMintSuccess?: () => void; // Optional callback when NFT is minted successfully
 }
 
-const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress }) => {
+const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress, onMintSuccess }) => {
   const [name, setName] = useState<string>('Admin Role NFT');
   const [description, setDescription] = useState<string>('This is an Admin Role NFT');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -153,6 +154,8 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
         attributes: attributes.filter(attr => attr.trait_type.trim() && attr.value.trim()), // Filter empty attributes
       };
 
+      console.log('Metadata:', metadata);
+
       // 3. Upload Metadata JSON to IPFS
       setStatusMessage('Uploading metadata JSON to IPFS...');
       const metadataCid = await PinataService.uploadJson(metadata);
@@ -162,6 +165,8 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
       // 4. Calculate SHA-256 hash of the metadata JSON
       const metadataJsonString = JSON.stringify(metadata);
       const metadataHash = await calculateSha256(metadataJsonString);
+
+      console.log('Metadata Hash:', metadataHash);
       
       console.log('=== NFT Metadata Creation Summary ===');
       console.log('Image CID:', imageCid);
@@ -202,6 +207,7 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
           const mintResult = await midnightClient.mintNFT({
             contractAddress: targetContractAddress,
             metadataHash: metadataHash,
+            metadataCID: metadataCid,
             did: did,
           });
 
@@ -210,6 +216,11 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
             setMintTransactionId(mintResult.data.transactionId);
             setStatusMessage(`🎉 NFT minted successfully! NFT ID: ${mintResult.data.nftId}`);
             console.log('✅ NFT Minted Successfully:', mintResult.data);
+            
+            // Call the success callback if provided
+            if (onMintSuccess) {
+              onMintSuccess();
+            }
           } else {
             throw new Error(mintResult.error || 'Failed to mint NFT');
           }

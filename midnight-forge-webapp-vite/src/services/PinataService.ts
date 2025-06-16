@@ -127,6 +127,33 @@ class PinataService {
       return false;
     }
   }
+
+  // Method to fetch JSON data from IPFS using various gateways
+  async fetchFromIPFS(cid: string): Promise<any> {
+    const gateways = [
+      `https://ipfs.io/ipfs/${cid}`,
+      `https://gateway.pinata.cloud/ipfs/${cid}`,
+      `https://cloudflare-ipfs.com/ipfs/${cid}`,
+      `https://dweb.link/ipfs/${cid}`,
+    ];
+
+    for (const gateway of gateways) {
+      try {
+        console.log(`Attempting to fetch from: ${gateway}`);
+        const response = await fetch(gateway);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Successfully fetched metadata from IPFS:', data);
+          return data;
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch from gateway: ${gateway}`, error);
+      }
+    }
+    
+    throw new Error(`Failed to fetch metadata from IPFS using CID: ${cid}`);
+  }
 }
 
 const pinataServiceInstance = new PinataService();
