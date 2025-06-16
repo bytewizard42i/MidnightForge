@@ -18,7 +18,7 @@
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "pino": "^8.15.0",
+    "pino": "^9.7.0",
     "pino-pretty": "^10.2.0",
     "@midnight-ntwrk/compact-runtime": "^0.8.1",
     "@midnight-ntwrk/ledger": "^4.0.0",
