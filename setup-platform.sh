@@ -92,9 +92,9 @@ configure_docker_compose() {
         sed -i.tmp "/image: 'midnightnetwork\/midnight-node:0.12.0'/a\\
 $PLATFORM_CONFIG" "$compose_file"
     else
-        # Add comment for macOS native
-        sed -i.tmp "/image: 'midnightnetwork\/midnight-node:0.12.0'/a\\
-    $PLATFORM_CONFIG" "$compose_file"
+        # Add comment for macOS native - use a different approach to avoid line concatenation
+        # Create temp file with proper formatting
+        awk '/image: '\''midnightnetwork\/midnight-node:0.12.0'\''/ { print; print "    # Native macOS Apple Silicon - no platform specification needed"; next } 1' "$compose_file" > "${compose_file}.new" && mv "${compose_file}.new" "$compose_file"
     fi
     
     # Configure healthcheck based on platform
