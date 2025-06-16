@@ -111,5 +111,49 @@ cleanup() {
 # Set trap for cleanup
 trap cleanup SIGINT SIGTERM
 
+# Function to open browser once services are ready
+open_browser_when_ready() {
+    echo "🌐 Waiting for frontend to be ready before opening browser..."
+    
+    # Wait for frontend to be ready
+    local max_attempts=30
+    local attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+        if curl -s http://localhost:5173 > /dev/null 2>&1; then
+            echo "✅ Frontend is ready!"
+            
+            # Wait an additional 2 seconds for full initialization
+            sleep 2
+            
+            # Open browser (works on macOS and Linux)
+            if command -v open > /dev/null 2>&1; then
+                # macOS
+                echo "🚀 Opening browser..."
+                open http://localhost:5173
+            elif command -v xdg-open > /dev/null 2>&1; then
+                # Linux
+                echo "🚀 Opening browser..."
+                xdg-open http://localhost:5173
+            else
+                echo "ℹ️  Browser auto-open not supported on this platform"
+                echo "   Please open: http://localhost:5173"
+            fi
+            break
+        fi
+        
+        attempt=$((attempt + 1))
+        sleep 1
+    done
+    
+    if [ $attempt -eq $max_attempts ]; then
+        echo "⚠️  Frontend took longer than expected to start"
+        echo "   Please check: http://localhost:5173"
+    fi
+}
+
+# Start browser opening in background
+open_browser_when_ready &
+
 # Run applications in development mode
 npm run apps:dev 
