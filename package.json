@@ -46,7 +46,11 @@
     "compact:install": "./setup-compact.sh install",
     "compact:check": "./setup-compact.sh check",
     "compact:unset": "./setup-compact.sh unset",
-    "compact:help": "./setup-compact.sh help"
+    "compact:help": "./setup-compact.sh help",
+    "platform:configure": "./setup-platform.sh configure",
+    "platform:show": "./setup-platform.sh show",
+    "platform:restore": "./setup-platform.sh restore",
+    "platform:help": "./setup-platform.sh help"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",

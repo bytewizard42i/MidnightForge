@@ -43,6 +43,15 @@ fi
 
 echo "🔧 Compact compiler setup completed, continuing with quickstart..."
 
+# Configure platform-specific Docker settings
+echo "🔧 Configuring platform-specific settings..."
+if [ -f "./setup-platform.sh" ]; then
+    chmod +x ./setup-platform.sh
+    ./setup-platform.sh configure
+else
+    echo "⚠️  Platform setup script not found, using default configuration"
+fi
+
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then
     echo "📦 Installing dependencies..."
@@ -65,15 +74,32 @@ echo "⏳ Waiting for blockchain services to be ready..."
 
 # Wait for services to be healthy
 echo "   Checking Node health..."
+node_timeout=300  # 5 minutes timeout for node startup
+node_elapsed=0
 until curl -s http://localhost:9944/health > /dev/null 2>&1; do
-    echo "   • Node starting up..."
-    sleep 2
+    if [ $node_elapsed -ge $node_timeout ]; then
+        echo "   ❌ Node failed to start within $node_timeout seconds"
+        echo "   💡 Try checking logs: npm run blockchain:logs:node"
+        echo "   💡 Or try restarting: npm run blockchain:restart"
+        exit 1
+    fi
+    echo "   • Node starting up... (${node_elapsed}s elapsed)"
+    sleep 5
+    node_elapsed=$((node_elapsed + 5))
 done
 
 echo "   Checking Indexer health..."
+indexer_timeout=120  # 2 minutes timeout for indexer
+indexer_elapsed=0
 until curl -s http://localhost:8088/health > /dev/null 2>&1; do
-    echo "   • Indexer starting up..."
-    sleep 2
+    if [ $indexer_elapsed -ge $indexer_timeout ]; then
+        echo "   ❌ Indexer failed to start within $indexer_timeout seconds"
+        echo "   💡 Try checking logs: npm run blockchain:logs:indexer"
+        exit 1
+    fi
+    echo "   • Indexer starting up... (${indexer_elapsed}s elapsed)"
+    sleep 3
+    indexer_elapsed=$((indexer_elapsed + 3))
 done
 
 echo "✅ Blockchain infrastructure is ready!"
