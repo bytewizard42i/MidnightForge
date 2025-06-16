@@ -21,9 +21,9 @@ import { Resource } from '@midnight-ntwrk/wallet';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 // import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
 import { buildFreshWallet, buildWalletAndWaitForFunds, configureCombinedContractProviders, getWalletFromSeed } from './api.js';
-import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
-import { hexStringToBytes32 } from './utils.js';
+import { fromHex, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { encodeCoinPublicKey, encodeContractAddress } from '@midnight-ntwrk/compact-runtime';
+import path from 'path';
 
 dotenv.config();
 
@@ -192,6 +192,7 @@ app.post('/api/deploy-contract', async (req: Request, res: Response) => {
 
     const providers = await configureCombinedContractProviders(wallet, config.midnight);
     
+    console.info('Deploying contract...');
     const counterContract = await deployContract(providers, {
       contract: combinedContractInstance,
       privateStateId: CombinedContractPrivateStateId,
@@ -318,6 +319,100 @@ app.post('/api/mint-nft', async (req: Request, res: Response) => {
   }
 });
 
+// List all NFTs for a contract endpoint
+app.get('/api/nfts/:contractAddress', async (req: Request, res: Response) => {
+  try {
+    const { contractAddress } = req.params;
+    
+    if (!contractAddress) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Missing required parameter: contractAddress',
+      };
+      return res.status(400).json(response);
+    }
+
+    if (!contractService) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Contract service not initialized. Please wait for wallet initialization to complete.',
+      };
+      return res.status(503).json(response);
+    }
+
+    // Build wallet and configure providers
+    const wallet = await buildFreshWallet(config);
+    const providers = await configureCombinedContractProviders(wallet, config.midnight);
+    
+    console.info('Finding deployed contract for NFT listing...');
+    console.info('Contract address:', contractAddress);
+    
+    // Find the deployed contract using findDeployedContract
+    const foundContract = await findDeployedContract(providers, {
+      contractAddress, // Use contract address directly as string
+      contract: combinedContractInstance,
+      privateStateId: CombinedContractPrivateStateId,
+      initialPrivateState: { privateValue: 0 },
+    });
+
+    console.info('Getting current counter to determine total NFTs...');
+    // Get the current counter to know how many NFTs exist
+    const counterResult = await foundContract.callTx.getCounter();
+    const totalNFTs = Number(counterResult.private.result);
+    
+    console.info(`Total NFTs minted: ${totalNFTs}`);
+    
+    const nfts = [];
+    
+    // Fetch each NFT from ID 1 to totalNFTs
+    for (let nftId = 1; nftId <= totalNFTs; nftId++) {
+      try {
+        console.info(`Fetching NFT ${nftId}...`);
+        const nftResult = await foundContract.callTx.getDIDzNFTFromId(BigInt(nftId));
+        const nftData = nftResult.private.result;
+        
+        nfts.push({
+          nftId,
+          ownerAddress: toHex(nftData.ownerAddress),
+          metadataHash: toHex(nftData.metadataHash),
+          did: toHex(nftData.did),
+        });
+      } catch (error) {
+        // NFT might not exist (could be burned), skip it
+        console.warn(`NFT ${nftId} not found, skipping...`);
+        continue;
+      }
+    }
+    
+    console.info(`Successfully retrieved ${nfts.length} NFTs`);
+    
+    const response = {
+      success: true,
+      data: {
+        nfts,
+        totalCount: nfts.length,
+        maxNftId: totalNFTs,
+        message: 'NFTs retrieved successfully',
+      },
+    };
+    
+    return res.status(200).json(response);
+  } catch (error) {
+    logger.error('Error in list-nfts endpoint:', error);
+    logger.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error,
+      error: error
+    });
+    const response: ApiResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+    return res.status(500).json(response);
+  }
+});
+
 // Get NFT endpoint
 app.get('/api/nft/:contractAddress/:nftId', async (req: Request, res: Response) => {
   try {
@@ -331,17 +426,65 @@ app.get('/api/nft/:contractAddress/:nftId', async (req: Request, res: Response) 
       return res.status(400).json(response);
     }
 
-    // TODO: Call get NFT service
+    if (!contractService) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Contract service not initialized. Please wait for wallet initialization to complete.',
+      };
+      return res.status(503).json(response);
+    }
+
+    // Build wallet and configure providers
+    const wallet = await buildFreshWallet(config);
+    const providers = await configureCombinedContractProviders(wallet, config.midnight);
     
-    // Placeholder response
-    const response: ApiResponse = {
-      success: false,
-      error: 'Get NFT not yet implemented - wallet initialization required',
+    console.info('Finding deployed contract for NFT viewing...');
+    console.info('Contract address:', contractAddress);
+    console.info('NFT ID:', nftId);
+    
+    // Find the deployed contract using findDeployedContract
+    const foundContract = await findDeployedContract(providers, {
+      contractAddress, // Use contract address directly as string
+      contract: combinedContractInstance,
+      privateStateId: CombinedContractPrivateStateId,
+      initialPrivateState: { privateValue: 0 },
+    });
+
+    console.info('Calling getDIDzNFTFromId circuit...');
+    // Call the getDIDzNFTFromId circuit to get NFT details
+    const nftResult = await foundContract.callTx.getDIDzNFTFromId(
+      BigInt(nftId) // Convert string nftId to Field (BigInt)
+    );
+    
+    const nftData = nftResult.private.result;
+    const transactionId = nftResult.public.txId;
+    
+    console.info(`Retrieved NFT ${nftId}:`, nftData);
+    
+    // Convert bytes to hex strings for frontend consumption
+    const response = {
+      success: true,
+      data: {
+        nft: {
+          nftId: parseInt(nftId),
+          ownerAddress: toHex(nftData.ownerAddress),
+          metadataHash: toHex(nftData.metadataHash),
+          did: toHex(nftData.did),
+        },
+        transactionId: transactionId,
+        message: 'NFT retrieved successfully',
+      },
     };
     
-    return res.status(501).json(response);
+    return res.status(200).json(response);
   } catch (error) {
     logger.error('Error in get-nft endpoint:', error);
+    logger.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error,
+      error: error
+    });
     const response: ApiResponse = {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

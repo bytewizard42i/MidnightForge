@@ -1,0 +1,444 @@
+/* ViewNFTs.module.css */
+
+.view-nfts-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.view-nfts-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.view-nfts-header h2 {
+  color: #2d3748;
+  margin-bottom: 8px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.view-nfts-header p {
+  color: #718096;
+  font-size: 16px;
+  margin: 0;
+}
+
+.contract-input-section {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.contract-input-section label {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 8px;
+}
+
+.input-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.contract-address-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+  transition: all 0.2s ease;
+}
+
+.contract-address-input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.load-button, .refresh-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.load-button:hover, .refresh-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.load-button:disabled, .refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.contract-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 14px;
+}
+
+.error-message {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  color: #c53030;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.nfts-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  min-height: 600px;
+}
+
+@media (max-width: 768px) {
+  .nfts-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.nfts-list-panel, .nft-details-panel {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.nfts-list-panel h3, .nft-details-panel h3 {
+  color: #2d3748;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #718096;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #718096;
+}
+
+.empty-state small {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #a0aec0;
+}
+
+.nfts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.nft-card {
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.nft-card:hover {
+  border-color: #cbd5e0;
+  background: #edf2f7;
+  transform: translateY(-1px);
+}
+
+.nft-card.selected {
+  border-color: #667eea;
+  background: #ebf4ff;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.nft-id {
+  font-weight: 700;
+  color: #2d3748;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.nft-preview {
+  margin-bottom: 8px;
+}
+
+.nft-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.nft-hash {
+  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 11px;
+  color: #718096;
+  background: #edf2f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.nft-owner {
+  font-size: 12px;
+  color: #a0aec0;
+  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+}
+
+.no-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #718096;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-selection small {
+  color: #a0aec0;
+  margin-top: 8px;
+}
+
+.nft-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.mutability-toggle {
+  background: #48bb78;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mutability-toggle:hover {
+  background: #38a169;
+  transform: translateY(-1px);
+}
+
+.nft-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.metadata-image {
+  text-align: center;
+}
+
+.metadata-image img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.placeholder-image {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 8px;
+  font-size: 48px;
+  color: #a0aec0;
+  margin: 0 auto;
+}
+
+.metadata-info h4 {
+  color: #2d3748;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.description {
+  color: #718096;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.attributes, .technical-details {
+  margin-top: 16px;
+}
+
+.attributes h5, .technical-details h5 {
+  color: #2d3748;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.attribute, .tech-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f7fafc;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.trait-type, .tech-detail span:first-child {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.trait-value {
+  color: #2d3748;
+}
+
+.address, .hash {
+  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  color: #667eea;
+  background: #ebf4ff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.mutability-panel {
+  background: #fffaf0;
+  border: 1px solid #feb2b2;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.mutability-panel h3 {
+  color: #744210;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.mutability-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.action-button {
+  background: #ed8936;
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background: #dd6b20;
+  transform: translateY(-1px);
+}
+
+.action-button.update-metadata {
+  background: #3182ce;
+}
+
+.action-button.update-metadata:hover {
+  background: #2c5aa0;
+}
+
+.action-button.transfer-nft {
+  background: #38a169;
+}
+
+.action-button.transfer-nft:hover {
+  background: #2f855a;
+}
+
+.action-button.burn-nft {
+  background: #e53e3e;
+}
+
+.action-button.burn-nft:hover {
+  background: #c53030;
+}
+
+.mutability-note {
+  font-size: 13px;
+  color: #744210;
+  margin: 0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.no-metadata {
+  text-align: center;
+  padding: 40px 20px;
+  color: #e53e3e;
+  font-weight: 500;
+} 

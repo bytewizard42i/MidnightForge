@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test:deploy": "tsx test-deploy.ts",
     "test:mint": "vitest tests/mint-nft.test.ts",
+    "test:list": "vitest tests/list-nfts.test.ts",
     "test": "vitest tests/"
   },
   "dependencies": {

@@ -52,14 +52,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const currentDir = path.resolve(__dirname);
 
-// export const contractConfig = {
-//   privateStateStoreName: 'counter-private-state',
-//   zkConfigPath: path.resolve(currentDir, '..', '..', 'contract', 'src', 'managed', 'counter'),
-// };
-
 export const combinedContractConfig = {
   privateStateStoreName: 'combinedContractPrivateState',
-  zkConfigPath: path.resolve(currentDir, '..', '..', 'contract', 'src', 'managed', 'combinedContract'),
+  zkConfigPath: path.resolve(currentDir, '..', '..', 'nft-contract', 'src', 'managed', 'combinedContract'),
 };
 
 export interface Config {

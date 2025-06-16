@@ -42,10 +42,29 @@ export interface GetNFTResponse {
   success: boolean;
   data?: {
     nft: {
-      owner: string;
+      nftId: number;
+      ownerAddress: string;
       metadataHash: string;
       did: string;
     };
+    transactionId: string;
+    message: string;
+  };
+  error?: string;
+}
+
+export interface ListNFTsResponse {
+  success: boolean;
+  data?: {
+    nfts: Array<{
+      nftId: number;
+      ownerAddress: string;
+      metadataHash: string;
+      did: string;
+    }>;
+    totalCount: number;
+    maxNftId: number;
+    message: string;
   };
   error?: string;
 }
@@ -199,6 +218,15 @@ export class MidnightForgeClient {
    */
   async getNFT(contractAddress: string, nftId: number): Promise<GetNFTResponse> {
     return this.request<GetNFTResponse>(`/api/nft/${contractAddress}/${nftId}`, {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * List NFTs - Retrieve all NFTs in a contract
+   */
+  async listNFTs(contractAddress: string): Promise<ListNFTsResponse> {
+    return this.request<ListNFTsResponse>(`/api/nfts/${contractAddress}`, {
       method: 'GET',
     });
   }

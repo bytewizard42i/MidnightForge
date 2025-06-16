@@ -28,9 +28,10 @@ interface NFTMetadata {
 
 interface CreateMetadataFormProps {
   contractAddress?: string; // Optional contract address from parent
+  onMintSuccess?: () => void; // Optional callback when NFT is minted successfully
 }
 
-const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress }) => {
+const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress, onMintSuccess }) => {
   const [name, setName] = useState<string>('Admin Role NFT');
   const [description, setDescription] = useState<string>('This is an Admin Role NFT');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -210,6 +211,11 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
             setMintTransactionId(mintResult.data.transactionId);
             setStatusMessage(`🎉 NFT minted successfully! NFT ID: ${mintResult.data.nftId}`);
             console.log('✅ NFT Minted Successfully:', mintResult.data);
+            
+            // Call the success callback if provided
+            if (onMintSuccess) {
+              onMintSuccess();
+            }
           } else {
             throw new Error(mintResult.error || 'Failed to mint NFT');
           }
