@@ -1,0 +1,5 @@
+creation_rules:
+  - path_regex: \.env\.secrets$
+    age: age12tenjcahg6lvqsscujnkrkekacf4qtqxtzt8a5u994qfyfpljswqlfhf0g
+  - path_regex: \.env\.secrets\.enc$
+    age: age12tenjcahg6lvqsscujnkrkekacf4qtqxtzt8a5u994qfyfpljswqlfhf0g 
