@@ -110,9 +110,9 @@ configure_docker_compose() {
     # Configure healthcheck based on platform
     if [[ "$HEALTHCHECK_CONFIG" == "emulated" ]]; then
         # Increase timeouts for emulated environments
-        sed -i.tmp 's/interval: 5s/interval: 10s/g' "$compose_file"
-        sed -i.tmp 's/timeout: 10s/timeout: 15s/g' "$compose_file"
-        sed -i.tmp 's/start_period: 120s/start_period: 180s/g' "$compose_file"
+        sed -i.tmp 's/interval: 2s/interval: 10s/g' "$compose_file"
+        sed -i.tmp 's/timeout: 5s/timeout: 15s/g' "$compose_file"
+        sed -i.tmp 's/start_period: 40s/start_period: 180s/g' "$compose_file"
         print_info "Extended timeouts for emulated environment"
     fi
     
