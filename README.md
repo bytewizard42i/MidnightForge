@@ -1,6 +1,6 @@
 # 🌙 MidnightForge
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/bytewizard42i/MidnightForge/ci.yml?branch=main)](https://github.com/bytewizard42i/MidnightForge/actions) [![License: APACHE 2.0](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/github/v/release/bytewizard42i/MidnightForge)](https://github.com/bytewizard42i/MidnightForge/releases)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/bytewizard42i/MidnightForge/ci.yml?branch=main)](https://github.com/bytewizard42i/MidnightForge/actions) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![Version](https://img.shields.io/github/v/release/bytewizard42i/MidnightForge)](https://github.com/bytewizard42i/MidnightForge/releases)
 
 ---
 
@@ -396,7 +396,7 @@ We ❤️ community contributions!
 ---
 
 ## 📜 License
-This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
+This project is licensed under the **Apache License 2.0**. See [LICENSE](LICENSE) for details.
 
 ---
 
