@@ -9,6 +9,12 @@ services:
       RUST_BACKTRACE: "full"
     networks:
       - midnight-network
+    deploy:
+      resources:
+        limits:
+          memory: 1GB
+        reservations:
+          memory: 512MB
 
   indexer:
     container_name: 'midnight-forge-indexer'
@@ -26,6 +32,12 @@ services:
         condition: service_started
     networks:
       - midnight-network
+    deploy:
+      resources:
+        limits:
+          memory: 768MB
+        reservations:
+          memory: 384MB
 
   node:
     image: 'midnightnetwork/midnight-node:0.12.0'
@@ -42,6 +54,12 @@ services:
       CFG_PRESET: "dev"
     networks:
       - midnight-network
+    deploy:
+      resources:
+        limits:
+          memory: 1.5GB
+        reservations:
+          memory: 768MB
 
   # Application Services
   midnight-forge-server:
@@ -66,6 +84,12 @@ services:
     volumes:
       - ./midnight-forge-server:/app
       - /app/node_modules
+    deploy:
+      resources:
+        limits:
+          memory: 512MB
+        reservations:
+          memory: 256MB
 
   midnight-forge-webapp:
     container_name: 'midnight-forge-webapp'
@@ -84,6 +108,12 @@ services:
     volumes:
       - ./midnight-forge-webapp-vite:/app
       - /app/node_modules
+    deploy:
+      resources:
+        limits:
+          memory: 512MB
+        reservations:
+          memory: 256MB
 
 networks:
   midnight-network:

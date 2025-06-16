@@ -18,6 +18,12 @@ services:
       - /app/node_modules
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          memory: 512MB
+        reservations:
+          memory: 256MB
 
   midnight-forge-webapp:
     container_name: 'midnight-forge-webapp'
@@ -33,4 +39,10 @@ services:
       - midnight-forge-server
     volumes:
       - ./midnight-forge-webapp-vite:/app
-      - /app/node_modules 
+      - /app/node_modules
+    deploy:
+      resources:
+        limits:
+          memory: 512MB
+        reservations:
+          memory: 256MB 

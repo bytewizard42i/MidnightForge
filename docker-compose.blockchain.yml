@@ -10,6 +10,12 @@ services:
     networks:
       - midnight-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1GB
+        reservations:
+          memory: 512MB
 
   indexer:
     container_name: 'midnight-forge-indexer'
@@ -28,10 +34,16 @@ services:
     networks:
       - midnight-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768MB
+        reservations:
+          memory: 384MB
 
   node:
     image: 'midnightnetwork/midnight-node:0.12.0'
-    # Native macOS Apple Silicon - no platform specification needed    container_name: 'midnight-forge-node'
+    platform: linux/amd64
     ports:
       - "9944:9944"
     healthcheck:
@@ -45,6 +57,12 @@ services:
     networks:
       - midnight-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1.5GB
+        reservations:
+          memory: 768MB
 
 networks:
   midnight-network:
