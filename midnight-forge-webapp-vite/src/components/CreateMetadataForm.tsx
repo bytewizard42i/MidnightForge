@@ -154,6 +154,8 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
         attributes: attributes.filter(attr => attr.trait_type.trim() && attr.value.trim()), // Filter empty attributes
       };
 
+      console.log('Metadata:', metadata);
+
       // 3. Upload Metadata JSON to IPFS
       setStatusMessage('Uploading metadata JSON to IPFS...');
       const metadataCid = await PinataService.uploadJson(metadata);

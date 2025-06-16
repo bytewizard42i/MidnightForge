@@ -1,160 +1,194 @@
-/* ViewNFTs.module.css */
+/* ViewNFTs.module.css - Magic Eden inspired design */
 
-.view-nfts-container {
-  max-width: 1200px;
+.viewNftsContainer {
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  padding: 1rem;
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-.view-nfts-header {
+.viewNftsHeader {
+  padding: 1rem 0 2rem 0;
   text-align: center;
-  margin-bottom: 30px;
 }
 
-.view-nfts-header h2 {
-  color: #2d3748;
-  margin-bottom: 8px;
-  font-size: 28px;
+.viewNftsHeader h2 {
+  font-size: 2.5rem;
   font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.view-nfts-header p {
-  color: #718096;
-  font-size: 16px;
+.viewNftsHeader p {
+  color: #a0aec0;
+  font-size: 1.1rem;
   margin: 0;
 }
 
-.contract-input-section {
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
+.contractInputSection {
+  max-width: 800px;
+  margin: 1rem auto 2rem auto;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
 }
 
-.contract-input-section label {
+.contractInputSection label {
   display: block;
   font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 8px;
+  color: #e2e8f0;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.input-group {
+.inputGroup {
   display: flex;
-  gap: 12px;
+  gap: 1rem;
   align-items: center;
 }
 
-.contract-address-input {
+.contractAddressInput {
   flex: 1;
-  padding: 12px 16px;
-  border: 1px solid #cbd5e0;
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
-  transition: all 0.2s ease;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.3s ease;
 }
 
-.contract-address-input:focus {
+.contractAddressInput:focus {
   outline: none;
-  border-color: #4299e1;
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+  border-color: #667eea;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
-.load-button, .refresh-button {
+.contractAddressInput::placeholder {
+  color: #718096;
+}
+
+.loadButton, .refreshButton {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
+  padding: 1rem 2rem;
+  border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   white-space: nowrap;
+  font-size: 0.9rem;
 }
 
-.load-button:hover, .refresh-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.loadButton:hover, .refreshButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
-.load-button:disabled, .refresh-button:disabled {
-  opacity: 0.6;
+.loadButton:disabled, .refreshButton:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.contract-info {
+.contractInfo {
+  margin: 0 auto 2rem auto;
+  padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ebf8ff;
-  border: 1px solid #bee3f8;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
-  font-size: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
 }
 
-.error-message {
-  background: #fed7d7;
-  border: 1px solid #fc8181;
-  color: #c53030;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.errorMessage {
+  margin: 1rem auto;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: #fca5a5;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
   font-weight: 500;
 }
 
-.nfts-content {
+.nftsContent {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  grid-template-columns: minmax(280px, 320px) 1fr;
+  gap: 1.5rem;
   min-height: 600px;
+  width: 100%;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .nfts-content {
+@media (max-width: 1024px) {
+  .nftsContent {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 1.5rem;
   }
 }
 
-.nfts-list-panel, .nft-details-panel {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
+.nftsListPanel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1rem;
   height: fit-content;
+  backdrop-filter: blur(10px);
 }
 
-.nfts-list-panel h3, .nft-details-panel h3 {
-  color: #2d3748;
-  margin-bottom: 16px;
-  font-size: 20px;
+.nftsListPanel h3 {
+  color: #e2e8f0;
+  margin-bottom: 1rem;
+  font-size: 1rem;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.loading-state {
+.nftDetailsPanel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.loadingState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
-  color: #718096;
+  padding: 3rem 1rem;
+  color: #a0aec0;
 }
 
 .spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e2e8f0;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
   border-top: 3px solid #667eea;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 12px;
+  margin-bottom: 1rem;
 }
 
 @keyframes spin {
@@ -162,283 +196,367 @@
   100% { transform: rotate(360deg); }
 }
 
-.empty-state {
+.emptyState {
   text-align: center;
-  padding: 40px 20px;
-  color: #718096;
-}
-
-.empty-state small {
-  display: block;
-  margin-top: 8px;
-  font-size: 13px;
+  padding: 3rem 1rem;
   color: #a0aec0;
 }
 
-.nfts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+.emptyState small {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #718096;
 }
 
-.nft-card {
-  background: #f7fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
+.nftsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nftCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.75rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.nft-card:hover {
-  border-color: #cbd5e0;
-  background: #edf2f7;
+.nftCard:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+  background: rgba(255, 255, 255, 0.08);
   transform: translateY(-1px);
 }
 
-.nft-card.selected {
+.nftCard.selected {
   border-color: #667eea;
-  background: #ebf4ff;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
 }
 
-.nft-id {
-  font-weight: 700;
-  color: #2d3748;
-  font-size: 16px;
-  margin-bottom: 8px;
-}
-
-.nft-preview {
-  margin-bottom: 8px;
-}
-
-.nft-icon {
-  font-size: 24px;
-  margin-bottom: 4px;
-}
-
-.nft-hash {
-  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
-  font-size: 11px;
-  color: #718096;
-  background: #edf2f7;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.nft-owner {
-  font-size: 12px;
-  color: #a0aec0;
-  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
-}
-
-.no-selection {
+.nftPreview {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  color: #718096;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
-.placeholder-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+.nftInfo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.no-selection small {
+.nftId {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #e2e8f0;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nftHash {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
   color: #a0aec0;
-  margin-top: 8px;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.nft-details-header {
+.nftOwner {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: #718096;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nftDetailsHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.mutability-toggle {
-  background: #48bb78;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.nftDetailsHeader h3 {
+  color: #e2e8f0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
 }
 
-.mutability-toggle:hover {
-  background: #38a169;
-  transform: translateY(-1px);
-}
-
-.nft-metadata {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.metadata-image {
-  text-align: center;
-}
-
-.metadata-image img {
-  max-width: 200px;
-  max-height: 200px;
+.mutabilityToggle {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
 }
 
-.placeholder-image {
-  width: 200px;
-  height: 200px;
+.mutabilityToggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.nftMetadata {
+  display: grid;
+  grid-template-columns: minmax(150px, 180px) 1fr;
+  gap: 1rem;
+  align-items: start;
+  width: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .nftMetadata {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.metadataImage {
+  width: 100%;
+  max-width: 200px;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f7fafc;
-  border: 2px dashed #e2e8f0;
-  border-radius: 8px;
-  font-size: 48px;
-  color: #a0aec0;
-  margin: 0 auto;
+  position: relative;
 }
 
-.metadata-info h4 {
-  color: #2d3748;
-  font-size: 20px;
+.metadataImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholderImage {
+  font-size: 4rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.metadataInfo h4 {
+  font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 8px;
+  color: #e2e8f0;
+  margin-bottom: 0.5rem;
 }
 
 .description {
-  color: #718096;
-  line-height: 1.5;
-  margin-bottom: 16px;
+  color: #a0aec0;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
 }
 
-.attributes, .technical-details {
-  margin-top: 16px;
+.attributes, .technicalDetails {
+  margin-bottom: 2rem;
+  width: 100%;
+  overflow: hidden;
 }
 
-.attributes h5, .technical-details h5 {
-  color: #2d3748;
-  font-size: 14px;
+.attributes h5, .technicalDetails h5 {
+  color: #e2e8f0;
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.attribute, .tech-detail {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f7fafc;
-  border-radius: 6px;
-  margin-bottom: 4px;
-  font-size: 14px;
+.attribute, .techDetail {
+  display: grid;
+  grid-template-columns: minmax(80px, 120px) 1fr;
+  align-items: start;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  gap: 1rem;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
-.trait-type, .tech-detail span:first-child {
+.traitType, .techDetail span:first-child {
   font-weight: 600;
-  color: #4a5568;
+  color: #cbd5e0;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.trait-value {
-  color: #2d3748;
+.traitValue {
+  color: #e2e8f0;
+  font-weight: 500;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .address, .hash {
-  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
-  font-size: 12px;
-  color: #667eea;
-  background: #ebf4ff;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: #a0aec0;
   word-break: break-all;
+  overflow-wrap: break-word;
+  line-height: 1.4;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  display: block;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.mutability-panel {
-  background: #fffaf0;
-  border: 1px solid #feb2b2;
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 20px;
+.techDetail span:last-child:not(.address):not(.hash) {
+  color: #e2e8f0;
+  font-weight: 500;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.mutability-panel h3 {
-  color: #744210;
-  margin-bottom: 12px;
-  font-size: 16px;
+.noSelection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #a0aec0;
 }
 
-.mutability-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
+.placeholderIcon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
 }
 
-.action-button {
-  background: #ed8936;
-  color: white;
-  border: none;
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 13px;
+.noSelection p {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #cbd5e0;
+}
+
+.noSelection small {
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.mutabilityPanel {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.mutabilityPanel h3 {
+  color: #e2e8f0;
+  font-size: 1.1rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  margin-bottom: 1rem;
 }
 
-.action-button:hover {
-  background: #dd6b20;
+.mutabilityActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.actionButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+}
+
+.actionButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-1px);
 }
 
-.action-button.update-metadata {
-  background: #3182ce;
+.updateMetadata {
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #86efac;
 }
 
-.action-button.update-metadata:hover {
-  background: #2c5aa0;
+.updateMetadata:hover {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.5);
 }
 
-.action-button.transfer-nft {
-  background: #38a169;
+.transferNft {
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
 }
 
-.action-button.transfer-nft:hover {
-  background: #2f855a;
+.transferNft:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
-.action-button.burn-nft {
-  background: #e53e3e;
+.burnNft {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
 }
 
-.action-button.burn-nft:hover {
-  background: #c53030;
+.burnNft:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
-.mutability-note {
-  font-size: 13px;
-  color: #744210;
+.mutabilityNote {
+  color: #a0aec0;
+  font-size: 0.85rem;
+  line-height: 1.5;
   margin: 0;
-  line-height: 1.4;
-  font-style: italic;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
 }
 
-.no-metadata {
+.noMetadata {
   text-align: center;
-  padding: 40px 20px;
-  color: #e53e3e;
-  font-weight: 500;
+  padding: 3rem 1rem;
+  color: #a0aec0;
 } 

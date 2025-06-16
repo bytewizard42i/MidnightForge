@@ -38,7 +38,7 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
   // Initialize Midnight Forge client
   const midnightClient = new MidnightForgeClient({
     baseUrl: 'http://localhost:3001',
-    timeout: 60000,
+    timeout: 300000, // 5 minutes to match server timeout
   });
 
   const targetContractAddress = contractAddress || inputContractAddress;
@@ -77,33 +77,38 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
 
     try {
       console.log('Loading metadata for NFT:', nft.nftId);
-      console.log('Metadata hash:', nft.metadataHash);
+      console.log('Metadata hash (verification hash):', nft.metadataHash);
       
-      // Convert metadata hash to IPFS CID (remove 0x prefix and convert to base58)
-      // For now, we'll try to fetch it as a direct hash
-      const metadataHashWithoutPrefix = nft.metadataHash.startsWith('0x') 
-        ? nft.metadataHash.slice(2) 
-        : nft.metadataHash;
+      // The metadataHash is a SHA-256 verification hash, not an IPFS CID
+      // We need to reconstruct the metadata structure based on available data
+      // In a real implementation, you would either:
+      // 1. Store IPFS CIDs separately on-chain, or
+      // 2. Have a mapping service that maps hashes to IPFS CIDs, or
+      // 3. Use the hash to verify metadata fetched from a known source
       
-      // Try to fetch metadata from IPFS using the hash as CID
-      // This is a simplified approach - in production you might need more sophisticated hash conversion
-      try {
-        const metadata = await PinataService.fetchFromIPFS(metadataHashWithoutPrefix);
-        setNftMetadata(metadata);
-      } catch (ipfsError) {
-        console.warn('Failed to fetch from IPFS using hash as CID:', ipfsError);
-        // If direct hash doesn't work, show basic info
-        setNftMetadata({
-          name: `NFT #${nft.nftId}`,
-          description: 'Metadata not available via IPFS',
-          image: '',
-          attributes: [
-            { trait_type: 'Metadata Hash', value: nft.metadataHash },
-            { trait_type: 'Owner Address', value: nft.ownerAddress },
-            { trait_type: 'DID', value: nft.did }
-          ]
-        });
-      }
+      // For now, create a basic metadata structure with available on-chain data
+      const basicMetadata: NFTMetadata = {
+        name: `DIDz NFT #${nft.nftId}`,
+        description: `A DIDz NFT minted on the Midnight blockchain. This NFT represents a decentralized identity with verifiable metadata.`,
+        image: '', // No image available without IPFS CID
+        attributes: [
+          { trait_type: 'NFT ID', value: nft.nftId.toString() },
+          { trait_type: 'Metadata Hash', value: nft.metadataHash },
+          { trait_type: 'Owner Address', value: nft.ownerAddress },
+          { trait_type: 'DID', value: nft.did },
+          { trait_type: 'Blockchain', value: 'Midnight' },
+          { trait_type: 'Contract Type', value: 'DIDz NFT' }
+        ]
+      };
+
+      // TODO: In a future version, implement proper metadata decoding:
+      // 1. If you have a mapping service: const ipfsCid = await getMappingService().getCidForHash(nft.metadataHash);
+      // 2. If IPFS CID is stored on-chain: fetch it from the contract
+      // 3. If you have the original metadata: verify it using the hash
+      
+      console.log('Generated basic metadata structure for NFT', nft.nftId);
+      setNftMetadata(basicMetadata);
+      
     } catch (error) {
       console.error('Error loading NFT metadata:', error);
       setError(error instanceof Error ? error.message : 'Failed to load metadata');
@@ -236,13 +241,11 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
                   className={`${styles.nftCard} ${selectedNft?.nftId === nft.nftId ? styles.selected : ''}`}
                   onClick={() => handleNFTSelect(nft)}
                 >
-                  <div className={styles.nftId}>#{nft.nftId}</div>
-                  <div className={styles.nftPreview}>
-                    <div className={styles.nftIcon}>🎨</div>
-                    <div className={styles.nftHash}>{nft.metadataHash.slice(0, 8)}...</div>
-                  </div>
-                  <div className={styles.nftOwner}>
-                    Owner: {nft.ownerAddress.slice(0, 8)}...
+                  <div className={styles.nftPreview}>🎨</div>
+                  <div className={styles.nftInfo}>
+                    <div className={styles.nftId}>DIDz NFT #{nft.nftId}</div>
+                    <div className={styles.nftHash}>{nft.metadataHash.slice(0, 16)}...</div>
+                    <div className={styles.nftOwner}>Owner: {nft.ownerAddress.slice(0, 12)}...</div>
                   </div>
                 </div>
               ))}
@@ -290,31 +293,31 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
                     <p className={styles.description}>{nftMetadata.description}</p>
                     
                     <div className={styles.attributes}>
-                      <h5>Attributes:</h5>
+                      <h5>Attributes</h5>
                       {nftMetadata.attributes.map((attr, index) => (
                         <div key={index} className={styles.attribute}>
-                          <span className={styles.traitType}>{attr.trait_type}:</span>
+                          <span className={styles.traitType}>{attr.trait_type}</span>
                           <span className={styles.traitValue}>{attr.value}</span>
                         </div>
                       ))}
                     </div>
 
                     <div className={styles.technicalDetails}>
-                      <h5>Technical Details:</h5>
+                      <h5>Technical Details</h5>
                       <div className={styles.techDetail}>
-                        <span>NFT ID:</span>
+                        <span>NFT ID</span>
                         <span>{selectedNft.nftId}</span>
                       </div>
                       <div className={styles.techDetail}>
-                        <span>Owner Address:</span>
+                        <span>Owner Address</span>
                         <span className={styles.address}>{selectedNft.ownerAddress}</span>
                       </div>
                       <div className={styles.techDetail}>
-                        <span>Metadata Hash:</span>
+                        <span>Metadata Hash</span>
                         <span className={styles.hash}>{selectedNft.metadataHash}</span>
                       </div>
                       <div className={styles.techDetail}>
-                        <span>DID:</span>
+                        <span>DID</span>
                         <span className={styles.hash}>{selectedNft.did}</span>
                       </div>
                     </div>
