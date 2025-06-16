@@ -43,7 +43,8 @@ services:
 
   node:
     image: 'midnightnetwork/midnight-node:0.12.0'
-    platform: linux/amd64
+    # Native macOS Apple Silicon - no platform specification needed
+    container_name: 'midnight-forge-node'
     ports:
       - "9944:9944"
     healthcheck:
