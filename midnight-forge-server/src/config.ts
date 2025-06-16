@@ -3,16 +3,47 @@ import { fileURLToPath } from 'node:url';
 import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import dotenv from 'dotenv';
 import { existsSync } from 'fs';
+import { execSync } from 'child_process';
 
 // Load environment variables from encrypted secrets
-// Look for secrets in the project root (one level up from server directory)
-const secretsPath = path.resolve(process.cwd(), '..', '.env.secrets');
-if (existsSync(secretsPath)) {
-  dotenv.config({ path: secretsPath });
-  console.log('✅ Loaded encrypted secrets from', secretsPath);
+// Look for encrypted secrets in the project root (one level up from server directory)
+const encryptedSecretsPath = path.resolve(process.cwd(), '..', '.env.secrets.enc');
+const keyPath = path.resolve(process.cwd(), '..', 'key.txt');
+
+if (existsSync(encryptedSecretsPath) && existsSync(keyPath)) {
+  try {
+    // Use SOPS to decrypt the secrets and load them
+    process.env.SOPS_AGE_KEY_FILE = keyPath;
+    
+    const decryptedContent = execSync(
+      `sops --decrypt --input-type dotenv --output-type dotenv "${encryptedSecretsPath}"`,
+      { encoding: 'utf8', cwd: path.resolve(process.cwd(), '..') }
+    );
+    
+    // Parse and load the decrypted environment variables
+    const lines = decryptedContent.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const match = trimmed.match(/^([^=]+)=(.*)$/);
+        if (match && match[1] && match[2] !== undefined) {
+          const key = match[1].trim();
+          const value = match[2].replace(/^["']|["']$/g, '');
+          process.env[key] = value;
+        }
+      }
+    }
+    
+    console.log('✅ Loaded and decrypted secrets from', encryptedSecretsPath);
+  } catch (error: any) {
+    console.warn('⚠️  Failed to decrypt secrets, using default environment variables');
+    console.warn('   Error:', error.message);
+    dotenv.config(); // Fallback to default .env
+  }
 } else {
-  console.warn('⚠️  Encrypted secrets not found, using default environment variables');
-  console.warn('   Looking for:', secretsPath);
+  console.warn('⚠️  Encrypted secrets or key file not found, using default environment variables');
+  console.warn('   Looking for:', encryptedSecretsPath);
+  console.warn('   And key file:', keyPath);
   console.warn('   Run: npm run secrets:setup');
   dotenv.config(); // Fallback to default .env
 }
