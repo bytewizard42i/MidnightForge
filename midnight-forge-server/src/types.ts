@@ -46,6 +46,7 @@ export interface DeployContractResponse {
 export interface MintNFTRequest {
   contractAddress: string;
   metadataHash: string; // hex string
+  metadataCID: string;  // IPFS CID string
   did: string;          // hex string
 }
 

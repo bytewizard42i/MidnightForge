@@ -34,8 +34,8 @@ const app = express();
 
 // Initialize services
 const walletService = new SimpleWalletService();
-let contractService: ContractService | null = null;
-let wallet: Wallet & Resource | null = null;
+  let contractService: ContractService | null = null;
+  let wallet: Wallet & Resource | null = null;
 
 // Initialize wallet service on startup
 const initializeServices = async () => {
@@ -222,24 +222,26 @@ app.post('/api/deploy-contract', async (req: Request, res: Response) => {
   }
 });
 
+
 // NFT minting endpoint
 app.post('/api/mint-nft', async (req: Request, res: Response) => {
   try {
     logger.info('Raw request body:', req.body);
-    const { contractAddress, metadataHash, did } : MintNFTRequest = req.body;
+    const { contractAddress, metadataHash, metadataCID, did } : MintNFTRequest = req.body;
     
     logger.info('Extracted values:', {
       contractAddress: contractAddress,
       contractAddressType: typeof contractAddress,
       contractAddressLength: contractAddress?.length,
       metadataHash: metadataHash?.substring(0, 8) + '...',
+      metadataCID: metadataCID,
       did: did?.substring(0, 8) + '...'
     });
     
-    if (!contractAddress || !metadataHash || !did) {
+    if (!contractAddress || !metadataHash || !metadataCID || !did) {
       const response: ApiResponse = {
         success: false,
-        error: 'Missing required fields: contractAddress, metadataHash, did',
+        error: 'Missing required fields: contractAddress, metadataHash, metadataCID, did',
       };
       return res.status(400).json(response);
     }
@@ -286,10 +288,11 @@ app.post('/api/mint-nft', async (req: Request, res: Response) => {
 
     console.info('Calling mintDIDzNFT circuit...');
     // Call the mintDIDzNFT circuit
-    // Note: The contract expects DID and NFTMetadataHash structs with bytes field
+    // Note: The contract expects DID, NFTMetadataHash structs with bytes field, and metadata CID string
     const mintResult = await foundContract.callTx.mintDIDzNFT(
       { bytes: didBytes },        // recipientDID: DID
-      { bytes: metadataHashBytes } // metadataHash: NFTMetadataHash
+      { bytes: metadataHashBytes }, // metadataHash: NFTMetadataHash
+      metadataCID                 // metadataCID: Opaque<"string">
     );
     
     const nftId = Number(mintResult.private.result);
@@ -410,22 +413,35 @@ app.get('/api/nfts/:contractAddress', async (req: Request, res: Response) => {
               nftId,
               ownerAddress: toHex(nftData.ownerAddress),
               metadataHash: toHex(nftData.metadataHash),
+              metadataCID: nftData.metadataCID,
               did: toHex(nftData.did),
             };
 
-            // If metadata fetching is requested, attempt to decode it
-            if (includeMetadata === 'true') {
-              console.log(`Attempting to fetch metadata for NFT ${nftId}...`);
+            // If metadata fetching is requested, fetch from IPFS using the stored CID
+            if (includeMetadata === 'true' && nftData.metadataCID) {
+              console.log(`Attempting to fetch metadata for NFT ${nftId} using CID: ${nftData.metadataCID}`);
               
-              // Note: We don't have the IPFS URI stored on-chain in this contract version
-              // The metadata hash is just a verification hash, not a pointer to IPFS
-              // For now, we'll just indicate that metadata fetching is not available
-              // In a future version, we could store IPFS CIDs on-chain or use a mapping service
-              
-              baseNftInfo.metadataVerified = false;
-              // Don't assign undefined explicitly - leave properties unset
-              
-              console.log(`Metadata fetching not available for NFT ${nftId} - no IPFS URI stored on-chain`);
+              try {
+                const ipfsUri = `ipfs://${nftData.metadataCID}`;
+                baseNftInfo.metadataUri = ipfsUri;
+                
+                const metadata = await fetchMetadataFromIPFS(ipfsUri);
+                if (metadata) {
+                  baseNftInfo.metadata = metadata;
+                  
+                  // Verify metadata integrity
+                  const metadataJson = JSON.stringify(metadata);
+                  baseNftInfo.metadataVerified = await verifyMetadataHash(metadataJson, toHex(nftData.metadataHash));
+                  
+                  console.log(`✅ Successfully fetched and verified metadata for NFT ${nftId}`);
+                } else {
+                  console.warn(`⚠️ Failed to fetch metadata for NFT ${nftId} from IPFS`);
+                  baseNftInfo.metadataVerified = false;
+                }
+              } catch (error) {
+                console.error(`❌ Error fetching metadata for NFT ${nftId}:`, error);
+                baseNftInfo.metadataVerified = false;
+              }
             }
 
             return baseNftInfo;

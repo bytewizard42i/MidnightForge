@@ -19,6 +19,7 @@ struct NFTMetadataHash { bytes: Bytes<32>; }
 struct NFT {
     ownerAddress: Bytes<32>;
     metadataHash: Bytes<32>;
+    metadataCID: Opaque<"string">;
     did: Bytes<32>;
 }
 
@@ -39,6 +40,14 @@ export ledger didzNFTs: Map<Field, DID>;
  *   Stores the hash of the metadata associated with each DIDz NFT.
  */
 export ledger nftMetadata: Map<Field, NFTMetadataHash>;
+
+/*
+ * nftMetadataCID:
+ *   Map< Field (nftId) → Opaque<"string"> (metadataCID) >
+ *   Stores the IPFS CID where the metadata JSON is stored off-chain.
+ *   This enables retrieval and verification of the actual metadata content.
+ */
+export ledger nftMetadataCID: Map<Field, Opaque<"string">>;
 
 /*
  * nftToOwnerAddress:
@@ -131,19 +140,21 @@ export circuit public_key(seed: Field, sk: Bytes<32>): Bytes<32> {
  *   2. Verifies the issuer's signature over that message.
  *      (For simplicity, currently uses the contract owner as the issuer).
  *   3. Increments globalCounter to obtain a new unique nftId.
- *   4. Stores the recipient DID and metadata hash for the new nftId.
+ *   4. Stores the recipient DID, metadata hash, and metadata CID for the new nftId.
  *   5. Returns the new nftId.
  *
  * Params:
  *   recipientDID     – The Decentralized Identifier (DID) of the NFT recipient.
  *   metadataHash     – The cryptographic hash of the NFT's metadata.
+ *   metadataCID      – The IPFS CID where the metadata JSON is stored.
  *
  * Returns:
  *   Field (the assigned unique nftId)
  */
 export circuit mintDIDzNFT(
     recipientDID: DID,
-    metadataHash: NFTMetadataHash
+    metadataHash: NFTMetadataHash,
+    metadataCID: Opaque<"string">
 ): Field {
     // 1) Verify that only the contract owner (acting as a simple issuer for now) can mint NFTs
     assert own_public_key().bytes == ownerAddress
@@ -160,9 +171,10 @@ export circuit mintDIDzNFT(
     globalCounter.increment(1);
     const newId = globalCounter.read() as Field;
 
-    // 4) Record the NFT's owner and metadata hash
+    // 4) Record the NFT's owner, metadata hash, and metadata CID
     didzNFTs.insert(newId, recipientDID);
     nftMetadata.insert(newId, metadataHash);
+    nftMetadataCID.insert(newId, metadataCID);
 
     // 5) Record the NFT's owner address. which is the owner's public address we will use the coinPublicKeyLegacy
     nftToOwnerAddress.insert(newId, own_public_key().bytes);
@@ -206,6 +218,25 @@ export circuit getDIDzNFTOwner(nftId: Field): DID {
  */
 export circuit getDIDzNFTMetadataHash(nftId: Field): NFTMetadataHash {
     return nftMetadata.lookup(nftId);
+}
+
+// ----------------------------------------
+// === Circuit: getDIDzNFTMetadataCID() ===
+// ----------------------------------------
+
+/*
+ * export circuit getDIDzNFTMetadataCID
+ * -----------------------------------------------------------------------
+ * Public view: returns the IPFS CID for a given nftId.
+ *
+ * Params:
+ *   nftId – Field identifier of the DIDz NFT.
+ *
+ * Returns:
+ *   Opaque<"string"> – The IPFS CID where the metadata JSON is stored.
+ */
+export circuit getDIDzNFTMetadataCID(nftId: Field): Opaque<"string"> {
+    return nftMetadataCID.lookup(nftId);
 }
 
 // ------------------------
@@ -266,11 +297,13 @@ export circuit getDIDzNFTFromId(nftId: Field): NFT {
 
     const _did = didzNFTs.lookup(nftId);
     const _metadataHash = nftMetadata.lookup(nftId);
+    const _metadataCID = nftMetadataCID.lookup(nftId);
     const _ownerAddress = nftToOwnerAddress.lookup(nftId);
 
     return NFT {
         ownerAddress: _ownerAddress, // already a Bytes<32>
         metadataHash: _metadataHash.bytes,
+        metadataCID: _metadataCID,
         did: _did.bytes
     };
 }

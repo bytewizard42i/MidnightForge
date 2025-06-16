@@ -26,6 +26,7 @@ export interface DeployContractResponse {
 export interface MintNFTRequest {
   contractAddress: string;
   metadataHash: string; // hex string
+  metadataCID: string;  // IPFS CID string
   did: string;          // hex string
 }
 
@@ -60,7 +61,19 @@ export interface ListNFTsResponse {
       nftId: number;
       ownerAddress: string;
       metadataHash: string;
+      metadataCID: string;
       did: string;
+      metadata?: {
+        name: string;
+        description: string;
+        image: string;
+        attributes: Array<{
+          trait_type: string;
+          value: string | number;
+        }>;
+      };
+      metadataUri?: string;
+      metadataVerified?: boolean;
     }>;
     totalCount: number;
     maxNftId: number;

@@ -165,6 +165,8 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
       // 4. Calculate SHA-256 hash of the metadata JSON
       const metadataJsonString = JSON.stringify(metadata);
       const metadataHash = await calculateSha256(metadataJsonString);
+
+      console.log('Metadata Hash:', metadataHash);
       
       console.log('=== NFT Metadata Creation Summary ===');
       console.log('Image CID:', imageCid);
@@ -205,6 +207,7 @@ const CreateMetadataForm: React.FC<CreateMetadataFormProps> = ({ contractAddress
           const mintResult = await midnightClient.mintNFT({
             contractAddress: targetContractAddress,
             metadataHash: metadataHash,
+            metadataCID: metadataCid,
             did: did,
           });
 

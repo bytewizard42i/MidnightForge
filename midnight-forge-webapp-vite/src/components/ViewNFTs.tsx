@@ -8,6 +8,7 @@ interface NFT {
   nftId: number;
   ownerAddress: string;
   metadataHash: string;
+  metadataCID: string;
   did: string;
 }
 
@@ -55,11 +56,17 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
 
     try {
       console.log('Loading NFTs for contract:', targetContractAddress);
+      // We can optionally load metadata here by adding ?includeMetadata=true
       const response = await midnightClient.listNFTs(targetContractAddress);
       
       if (response.success && response.data) {
-        setNfts(response.data.nfts);
-        console.log(`Loaded ${response.data.nfts.length} NFTs`);
+        // Ensure all NFTs have the required metadataCID field (fallback for older data)
+        const nftsWithCID = response.data.nfts.map(nft => ({
+          ...nft,
+          metadataCID: (nft as any).metadataCID || '' // Fallback for compatibility
+        }));
+        setNfts(nftsWithCID);
+        console.log(`Loaded ${nftsWithCID.length} NFTs with CIDs:`, nftsWithCID.map(n => ({ id: n.nftId, cid: n.metadataCID })));
       } else {
         setError(response.error || 'Failed to load NFTs');
       }
@@ -77,16 +84,38 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
 
     try {
       console.log('Loading metadata for NFT:', nft.nftId);
+      console.log('Metadata CID:', nft.metadataCID);
       console.log('Metadata hash (verification hash):', nft.metadataHash);
       
-      // The metadataHash is a SHA-256 verification hash, not an IPFS CID
-      // We need to reconstruct the metadata structure based on available data
-      // In a real implementation, you would either:
-      // 1. Store IPFS CIDs separately on-chain, or
-      // 2. Have a mapping service that maps hashes to IPFS CIDs, or
-      // 3. Use the hash to verify metadata fetched from a known source
+      if (nft.metadataCID) {
+        // Fetch the actual metadata from IPFS using the stored CID
+        try {
+          const metadata = await PinataService.fetchFromIPFS(nft.metadataCID);
+          console.log('✅ Successfully fetched metadata from IPFS:', metadata);
+          
+          // Add technical details as additional attributes
+          const enhancedMetadata: NFTMetadata = {
+            ...metadata,
+            attributes: [
+              ...metadata.attributes,
+              { trait_type: 'NFT ID', value: nft.nftId.toString() },
+              { trait_type: 'Metadata Hash', value: nft.metadataHash },
+              { trait_type: 'Metadata CID', value: nft.metadataCID },
+              { trait_type: 'Owner Address', value: nft.ownerAddress },
+              { trait_type: 'DID', value: nft.did },
+              { trait_type: 'Blockchain', value: 'Midnight' },
+              { trait_type: 'Contract Type', value: 'DIDz NFT' }
+            ]
+          };
+          
+          setNftMetadata(enhancedMetadata);
+          return;
+        } catch (ipfsError) {
+          console.warn('⚠️ Failed to fetch metadata from IPFS, falling back to basic metadata:', ipfsError);
+        }
+      }
       
-      // For now, create a basic metadata structure with available on-chain data
+      // Fallback: create basic metadata structure with available on-chain data
       const basicMetadata: NFTMetadata = {
         name: `DIDz NFT #${nft.nftId}`,
         description: `A DIDz NFT minted on the Midnight blockchain. This NFT represents a decentralized identity with verifiable metadata.`,
@@ -94,19 +123,16 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
         attributes: [
           { trait_type: 'NFT ID', value: nft.nftId.toString() },
           { trait_type: 'Metadata Hash', value: nft.metadataHash },
+          { trait_type: 'Metadata CID', value: nft.metadataCID || 'Not available' },
           { trait_type: 'Owner Address', value: nft.ownerAddress },
           { trait_type: 'DID', value: nft.did },
           { trait_type: 'Blockchain', value: 'Midnight' },
-          { trait_type: 'Contract Type', value: 'DIDz NFT' }
+          { trait_type: 'Contract Type', value: 'DIDz NFT' },
+          { trait_type: 'Status', value: 'Metadata not accessible' }
         ]
       };
-
-      // TODO: In a future version, implement proper metadata decoding:
-      // 1. If you have a mapping service: const ipfsCid = await getMappingService().getCidForHash(nft.metadataHash);
-      // 2. If IPFS CID is stored on-chain: fetch it from the contract
-      // 3. If you have the original metadata: verify it using the hash
       
-      console.log('Generated basic metadata structure for NFT', nft.nftId);
+      console.log('Using fallback metadata structure for NFT', nft.nftId);
       setNftMetadata(basicMetadata);
       
     } catch (error) {
@@ -244,7 +270,8 @@ const ViewNFTs: React.FC<ViewNFTsProps> = ({ contractAddress }) => {
                   <div className={styles.nftPreview}>🎨</div>
                   <div className={styles.nftInfo}>
                     <div className={styles.nftId}>DIDz NFT #{nft.nftId}</div>
-                    <div className={styles.nftHash}>{nft.metadataHash.slice(0, 16)}...</div>
+                    <div className={styles.nftHash}>Hash: {nft.metadataHash.slice(0, 16)}...</div>
+                    <div className={styles.nftCid}>CID: {nft.metadataCID ? nft.metadataCID.slice(0, 16) + '...' : 'N/A'}</div>
                     <div className={styles.nftOwner}>Owner: {nft.ownerAddress.slice(0, 12)}...</div>
                   </div>
                 </div>

@@ -213,6 +213,7 @@ export interface EnhancedNFTData {
   nftId: number;
   ownerAddress: string;
   metadataHash: string;
+  metadataCID: string;
   did: string;
   // Optional decoded metadata (if available from IPFS)
   metadata?: NFTMetadata;
