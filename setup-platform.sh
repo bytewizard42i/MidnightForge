@@ -79,22 +79,32 @@ configure_docker_compose() {
     
     print_info "Configuring Docker Compose for detected platform..."
     
+    # Check if this is Mac M3 - if so, do ABSOLUTELY NOTHING
+    if [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
+        print_info "Mac M3 detected - leaving Docker Compose file completely untouched"
+        print_success "No configuration needed for native Apple Silicon"
+        return 0
+    fi
+    
+    # Only for non-Mac M3 platforms: Intel Mac and Linux
     # Create backup
     cp "$compose_file" "$backup_file"
     
-    # Remove any existing platform specification
+    # Remove any existing platform specification or comments
     sed -i.tmp '/platform: linux\/amd64/d' "$compose_file"
     sed -i.tmp '/# Native macOS Apple Silicon/d' "$compose_file"
     
-    # Add platform configuration if needed
+    # Add platform configuration (only for Intel Mac/Linux)
     if [[ -n "$PLATFORM_SPEC" ]]; then
-        # Add platform specification after the image line
-        sed -i.tmp "/image: 'midnightnetwork\/midnight-node:0.12.0'/a\\
-$PLATFORM_CONFIG" "$compose_file"
-    else
-        # Add comment for macOS native
-        sed -i.tmp "/image: 'midnightnetwork\/midnight-node:0.12.0'/a\\
-    $PLATFORM_CONFIG" "$compose_file"
+        # Add platform specification after the image line for Intel Mac/Linux
+        awk -v config="$PLATFORM_CONFIG" '
+        /image: '\''midnightnetwork\/midnight-node:0.12.0'\''/ { 
+            print; 
+            print config; 
+            next 
+        } 
+        1' "$compose_file" > "${compose_file}.new" && mv "${compose_file}.new" "$compose_file"
+        print_info "Platform specification added to Docker Compose"
     fi
     
     # Configure healthcheck based on platform
