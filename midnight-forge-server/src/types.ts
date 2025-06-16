@@ -5,7 +5,7 @@ import type { Wallet } from '@midnight-ntwrk/wallet-api';
 import type { Resource } from '@midnight-ntwrk/wallet';
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
 import type { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
-import { CombinedContract, type CombinedContractPrivateState } from '@midnight-forge/protocol-did-contract';
+import { CombinedContract, type CombinedContractPrivateState } from '../../nft-contract/dist';
 
 // Define types locally to avoid import issues
 export type CombinedContractCircuits = ImpureCircuitId<CombinedContract.Contract<CombinedContractPrivateState>>;

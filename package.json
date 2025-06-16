@@ -5,7 +5,7 @@
   "type": "module",
   "license": "Apache-2.0",
   "workspaces": [
-    "contract",
+    "nft-contract",
     "compact",
     "midnight-forge-server",
     "midnight-forge-webapp-vite"
@@ -13,7 +13,7 @@
   "scripts": {
     "quickstart": "./start-standalone.sh",
     "standalone": "docker compose -f docker-compose.standalone.yml up --build",
-    "standalone:hybrid": "npm run contract:build && docker compose -f docker-compose.standalone-hybrid.yml up --build",
+    "standalone:hybrid": "npm run nft-contract:build && docker compose -f docker-compose.standalone-hybrid.yml up --build",
     "standalone:detached": "docker compose -f docker-compose.standalone.yml up -d --build",
     "standalone:stop": "docker compose -f docker-compose.standalone.yml down",
     "standalone:stop-hybrid": "docker compose -f docker-compose.standalone-hybrid.yml down",
@@ -30,11 +30,11 @@
     "blockchain:status": "docker compose -f docker-compose.blockchain.yml ps",
     "cleanup:containers": "docker stop midnight-forge-proof-server midnight-forge-node midnight-forge-indexer 2>/dev/null || true && docker rm midnight-forge-proof-server midnight-forge-node midnight-forge-indexer 2>/dev/null || true",
     "cleanup:all": "npm run blockchain:stop && npm run standalone:stop && npm run cleanup:containers && docker system prune -f",
-    "apps:dev": "npm run contract:build && concurrently --raw \"npm run server:dev\" \"npm run webapp:dev\"",
+    "apps:dev": "npm run nft-contract:build && concurrently --raw \"npm run server:dev\" \"npm run webapp:dev\"",
     "server:dev": "cd midnight-forge-server && npm run dev",
     "webapp:dev": "cd midnight-forge-webapp-vite && npm run dev",
-    "build:all": "npm run contract:build && npm run server:build && npm run webapp:build",
-    "contract:build": "cd contract && npm run compact:combinedContract && npm run build:combinedContract",
+    "build:all": "npm run nft-contract:build && npm run server:build && npm run webapp:build",
+    "nft-contract:build": "cd nft-contract && npm run compact:combinedContract && npm run build:combinedContract",
     "server:build": "cd midnight-forge-server && npm run build",
     "webapp:build": "cd midnight-forge-webapp-vite && npm run build",
     "secrets:setup": "./setup-secrets.sh setup",

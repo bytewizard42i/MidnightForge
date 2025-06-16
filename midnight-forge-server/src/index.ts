@@ -12,7 +12,7 @@ import * as Rx from 'rxjs';
 import {
   CombinedContract,
   witnesses,
-} from '@midnight-forge/protocol-did-contract';
+} from '../../nft-contract/dist/index.js';
 
 // load env file
 import dotenv from 'dotenv';
