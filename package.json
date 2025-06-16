@@ -30,7 +30,7 @@
     "blockchain:status": "docker compose -f docker-compose.blockchain.yml ps",
     "cleanup:containers": "docker stop midnight-forge-proof-server midnight-forge-node midnight-forge-indexer 2>/dev/null || true && docker rm midnight-forge-proof-server midnight-forge-node midnight-forge-indexer 2>/dev/null || true",
     "cleanup:all": "npm run blockchain:stop && npm run standalone:stop && npm run cleanup:containers && docker system prune -f",
-    "apps:dev": "npm run contract:build && concurrently \"npm run server:dev\" \"npm run webapp:dev\"",
+    "apps:dev": "npm run contract:build && concurrently --raw \"npm run server:dev\" \"npm run webapp:dev\"",
     "server:dev": "cd midnight-forge-server && npm run dev",
     "webapp:dev": "cd midnight-forge-webapp-vite && npm run dev",
     "build:all": "npm run contract:build && npm run server:build && npm run webapp:build",
