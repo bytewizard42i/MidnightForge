@@ -97,10 +97,10 @@ check_compact() {
     print_info "Checking Compact compiler installation..."
     
     if [[ -n "${COMPACT_HOME:-}" ]]; then
-        if [[ -f "$COMPACT_HOME/bin/compactc" ]]; then
+        if [[ -f "$COMPACT_HOME/compactc" ]]; then
             print_success "Compact compiler found at: $COMPACT_HOME"
             print_info "Version check:"
-            "$COMPACT_HOME/bin/compactc" --version || true
+            "$COMPACT_HOME/compactc" --version || true
             return 0
         else
             print_warning "COMPACT_HOME is set but compiler not found at: $COMPACT_HOME"
@@ -110,7 +110,7 @@ check_compact() {
     fi
     
     # Check if compiler exists in current directory
-    if [[ -f "./$COMPACT_DIR/bin/compactc" ]]; then
+    if [[ -f "./$COMPACT_DIR/compactc" ]]; then
         print_info "Compact compiler found in current directory: ./$COMPACT_DIR"
         print_info "You can set COMPACT_HOME with:"
         echo "export COMPACT_HOME=$(pwd)/$COMPACT_DIR"
@@ -134,7 +134,7 @@ install_compact() {
         print_warning "Compact compiler directory already exists: $COMPACT_DIR"
         print_info "Checking if installation is complete..."
         
-        if [[ -f "$COMPACT_DIR/bin/compactc" ]]; then
+        if [[ -f "$COMPACT_DIR/compactc" ]]; then
             print_success "Compact compiler is already installed!"
             print_info "Setting COMPACT_HOME environment variable..."
             export COMPACT_HOME="$(pwd)/$COMPACT_DIR"
@@ -159,24 +159,19 @@ install_compact() {
     print_info "Extracting compiler..."
     
     # Create directory and extract into it
-    mkdir -p "$COMPACT_DIR/bin"
+    mkdir -p "$COMPACT_DIR"
     unzip -q "$COMPACT_ZIP" -d "$COMPACT_DIR"
     
-    # Move files to proper locations
+    # Make executables executable (they should be in the root of COMPACT_HOME)
     if [[ -f "$COMPACT_DIR/compactc" ]]; then
-        mv "$COMPACT_DIR/compactc" "$COMPACT_DIR/bin/"
-        chmod +x "$COMPACT_DIR/bin/compactc"
-    fi
-    if [[ -f "$COMPACT_DIR/compactc.bin" ]]; then
-        mv "$COMPACT_DIR/compactc.bin" "$COMPACT_DIR/bin/"
+        chmod +x "$COMPACT_DIR/compactc"
     fi
     if [[ -f "$COMPACT_DIR/zkir" ]]; then
-        mv "$COMPACT_DIR/zkir" "$COMPACT_DIR/bin/"
-        chmod +x "$COMPACT_DIR/bin/zkir"
+        chmod +x "$COMPACT_DIR/zkir"
     fi
     
     # Verify installation
-    if [[ -f "$COMPACT_DIR/bin/compactc" ]]; then
+    if [[ -f "$COMPACT_DIR/compactc" ]]; then
         print_success "Compact compiler extracted successfully!"
         
         # Set environment variable
@@ -197,7 +192,7 @@ install_compact() {
         print_success "Installation complete!"
         print_info "COMPACT_HOME set to: $COMPACT_HOME"
         print_info "Compiler version:"
-        "$COMPACT_HOME/bin/compactc" --version
+        "$COMPACT_HOME/compactc" --version
         
         # Clean up
         rm -f "$COMPACT_ZIP"
