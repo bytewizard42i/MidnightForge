@@ -319,11 +319,30 @@ npm run secrets:setup
 docker info  # Check if Docker is running
 ```
 
-**"Port already in use"**
+**"Container name already in use" or "Port already in use"**
 ```bash
-# Stop existing services
+# Quick cleanup
+npm run cleanup:containers
+
+# Full cleanup (if above doesn't work)
+npm run cleanup:all
+
+# Then try again
+npm run quickstart
+```
+
+**Services won't start properly**
+```bash
+# Stop all services
 npm run blockchain:stop
 npm run standalone:stop
+
+# Clean up containers and volumes
+npm run blockchain:clean
+npm run standalone:clean
+
+# Start fresh
+npm run quickstart
 ```
 
 **Environment variables not loading**
@@ -334,6 +353,15 @@ ls -la .env.secrets
 # Re-decrypt if needed
 npm run secrets:decrypt
 ```
+
+### Cleanup Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run cleanup:containers` | Remove MidnightForge containers |
+| `npm run cleanup:all` | Full cleanup (containers + system prune) |
+| `npm run blockchain:clean` | Clean blockchain volumes |
+| `npm run standalone:clean` | Clean standalone volumes |
 
 ---
 
