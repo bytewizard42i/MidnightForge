@@ -42,7 +42,11 @@
     "secrets:encrypt": "./setup-secrets.sh encrypt",
     "secrets:decrypt": "./setup-secrets.sh decrypt",
     "secrets:edit": "./setup-secrets.sh edit",
-    "secrets:help": "./setup-secrets.sh help"
+    "secrets:help": "./setup-secrets.sh help",
+    "compact:install": "./setup-compact.sh install",
+    "compact:check": "./setup-compact.sh check",
+    "compact:unset": "./setup-compact.sh unset",
+    "compact:help": "./setup-compact.sh help"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",

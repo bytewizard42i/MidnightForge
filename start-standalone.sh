@@ -19,6 +19,30 @@ fi
 
 echo "✅ Docker is running"
 
+# Check and install Compact compiler if needed
+echo "🔧 Checking Compact compiler..."
+if [ -z "${COMPACT_HOME:-}" ] || [ ! -f "${COMPACT_HOME}/bin/compactc" ]; then
+    echo "⚠️  Compact compiler not found or not properly configured"
+    echo "🔧 Installing Compact compiler automatically..."
+    ./setup-compact.sh install
+    
+    # Skip sourcing shell profiles to avoid hanging
+    echo "ℹ️  Skipping shell profile sourcing to avoid conflicts..."
+    
+    # Set COMPACT_HOME for current session if not set
+    if [ -z "${COMPACT_HOME:-}" ]; then
+        if [ -d "./compactc_v0.23.0_aarch64-darwin" ]; then
+            export COMPACT_HOME="$(pwd)/compactc_v0.23.0_aarch64-darwin"
+        elif [ -d "./compactc_v0.23.0_x86_64-unknown-linux-musl" ]; then
+            export COMPACT_HOME="$(pwd)/compactc_v0.23.0_x86_64-unknown-linux-musl"
+        fi
+    fi
+else
+    echo "✅ Compact compiler found at: $COMPACT_HOME"
+fi
+
+echo "🔧 Compact compiler setup completed, continuing with quickstart..."
+
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then
     echo "📦 Installing dependencies..."
@@ -28,8 +52,13 @@ fi
 echo "🔗 Starting blockchain infrastructure with Docker..."
 echo "⏱️  This may take a few moments for first-time setup..."
 
-# Start blockchain infrastructure in background
-docker compose -f docker-compose.blockchain.yml up -d
+# Check if containers are already running
+if docker ps --format "table {{.Names}}" | grep -q "midnight-forge"; then
+    echo "ℹ️  Blockchain containers already running, skipping startup..."
+else
+    # Start blockchain infrastructure in background
+    docker compose -f docker-compose.blockchain.yml up -d
+fi
 
 echo ""
 echo "⏳ Waiting for blockchain services to be ready..."

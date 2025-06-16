@@ -81,6 +81,16 @@ brew install sops age
 sudo apt install sops age
 ```
 
+### Compact Compiler
+The **Compact compiler** is automatically downloaded and configured during the quickstart process. No manual setup required!
+
+If you need to manage the compiler manually:
+```bash
+npm run compact:install    # Download and install compiler
+npm run compact:check      # Check installation status
+npm run compact:unset      # Unset for testing purposes
+```
+
 ---
 
 ## 📦 Installation

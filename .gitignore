@@ -69,3 +69,6 @@ key.txt
 
 # Compact
 managed/
+
+# Compact compiler (auto-downloaded)
+compactc_v*
