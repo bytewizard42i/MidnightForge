@@ -5,12 +5,14 @@ import dotenv from 'dotenv';
 import { existsSync } from 'fs';
 
 // Load environment variables from encrypted secrets
-const secretsPath = path.resolve(process.cwd(), '.env.secrets');
+// Look for secrets in the project root (one level up from server directory)
+const secretsPath = path.resolve(process.cwd(), '..', '.env.secrets');
 if (existsSync(secretsPath)) {
   dotenv.config({ path: secretsPath });
-  console.log('✅ Loaded encrypted secrets');
+  console.log('✅ Loaded encrypted secrets from', secretsPath);
 } else {
   console.warn('⚠️  Encrypted secrets not found, using default environment variables');
+  console.warn('   Looking for:', secretsPath);
   console.warn('   Run: npm run secrets:setup');
   dotenv.config(); // Fallback to default .env
 }

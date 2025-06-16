@@ -40,10 +40,8 @@ function App() {
   const handleDeploySuccess = (contractAddress: string) => {
     setContractDeployed(true);
     setDeployedContractAddress(contractAddress);
-    // Auto-navigate to next step after successful deployment
-    setTimeout(() => {
-      setCurrentStep('create-nft');
-    }, 2000);
+    // Navigate immediately to next step after successful deployment
+    setCurrentStep('create-nft');
   };
 
   const renderStepContent = () => {
