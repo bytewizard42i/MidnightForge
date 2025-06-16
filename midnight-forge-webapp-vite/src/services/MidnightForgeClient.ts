@@ -111,7 +111,7 @@ export class MidnightForgeClient {
 
   constructor(config: MidnightForgeClientConfig = {}) {
     this.baseUrl = config.baseUrl || 'http://localhost:3001';
-    this.timeout = config.timeout || 90000; // 90 seconds for contract deployment
+    this.timeout = config.timeout || 300000; // 5 minutes - very tolerant for testnet POC
     this.retries = config.retries || 1;
   }
 
@@ -225,10 +225,51 @@ export class MidnightForgeClient {
   /**
    * List NFTs - Retrieve all NFTs in a contract
    */
-  async listNFTs(contractAddress: string): Promise<ListNFTsResponse> {
-    return this.request<ListNFTsResponse>(`/api/nfts/${contractAddress}`, {
-      method: 'GET',
-    });
+  async listNFTs(contractAddress: string, maxRetries: number = 2): Promise<ListNFTsResponse> {
+    // Use longer timeout for list operations as they may need to fetch many NFTs
+    const url = `${this.baseUrl}/api/nfts/${contractAddress}`;
+    
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes for list operations
+
+      try {
+        console.log(`Attempting to list NFTs (attempt ${attempt}/${maxRetries + 1})...`);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log(`✅ Successfully retrieved NFT list on attempt ${attempt}`);
+        return data as ListNFTsResponse;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        const isLastAttempt = attempt === maxRetries + 1;
+        const shouldRetry = this.shouldRetry(error) && !isLastAttempt;
+        
+        if (shouldRetry) {
+          const delay = 2000 * Math.pow(1.5, attempt - 1); // Exponential backoff
+          console.warn(`List NFTs attempt ${attempt} failed, retrying in ${Math.round(delay)}ms:`, error instanceof Error ? error.message : error);
+          await this.delay(delay);
+        } else {
+          throw new Error(`Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+    }
+    
+    throw new Error('All attempts failed');
   }
 
   /**

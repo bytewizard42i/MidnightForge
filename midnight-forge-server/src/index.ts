@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import express from 'express';
 import cors from 'cors';
 import { getServerConfig, ServerConfig } from './config.js';
-import logger from './logger.js';
+// import logger from './logger.js';
 import { CombinedContractContract, CombinedContractPrivateStateId, DeployContractRequest, MintNFTRequest, type ApiResponse, type CombinedContractProviders, type HealthCheckResponse } from './types.js';
 import { SimpleWalletService } from './services/simpleWalletService.js';
 import { ContractService } from './services/contractService.js';
@@ -22,8 +22,10 @@ import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-j
 // import { fromHex } from '@midnight-ntwrk/midnight-js-utils';
 import { buildFreshWallet, buildWalletAndWaitForFunds, configureCombinedContractProviders, getWalletFromSeed } from './api.js';
 import { fromHex, toHex } from '@midnight-ntwrk/midnight-js-utils';
+import { EnhancedNFTData, fetchMetadataFromIPFS, verifyMetadataHash } from './utils.js';
 import { encodeCoinPublicKey, encodeContractAddress } from '@midnight-ntwrk/compact-runtime';
 import path from 'path';
+import logger from './logger.js';
 
 dotenv.config();
 
@@ -75,9 +77,9 @@ const initializeServices = async () => {
       throw new Error('Wallet state is null or undefined');
     }
 
-    logger.info('Services initialized successfully');
+    console.info('Services initialized successfully');
   } catch (error) {
-    logger.error('Failed to initialize services:', error);
+    console.error('Failed to initialize services:', error);
     process.exit(1);
   }
 };
@@ -95,7 +97,7 @@ app.use(express.json());
 
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
-  logger.info(`${req.method} ${req.path}`, { 
+  console.info(`${req.method} ${req.path}`, { 
     ip: req.ip, 
     userAgent: req.get('User-Agent') 
   });
@@ -165,7 +167,7 @@ app.post('/api/deploy-contract', async (req: Request, res: Response) => {
     console.info('Wallet:', wallet);
 
     // Call contract deployment service
-    logger.info('Deploying counter contract...');
+    console.info('Deploying counter contract...');
     const state = await Rx.firstValueFrom(wallet.state());
 
     console.info('State:', state);
@@ -319,10 +321,22 @@ app.post('/api/mint-nft', async (req: Request, res: Response) => {
   }
 });
 
+
+
 // List all NFTs for a contract endpoint
 app.get('/api/nfts/:contractAddress', async (req: Request, res: Response) => {
+  // Set a timeout for the entire operation (5 minutes - very tolerant for testnet)
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Operation timed out after 5 minutes')), 300000);
+  });
+
   try {
+    // Race between the actual operation and timeout
+    const result = await Promise.race([
+      timeoutPromise,
+      (async () => {
     const { contractAddress } = req.params;
+    const { includeMetadata } = req.query; // Optional query parameter to fetch IPFS metadata
     
     if (!contractAddress) {
       const response: ApiResponse = {
@@ -362,29 +376,85 @@ app.get('/api/nfts/:contractAddress', async (req: Request, res: Response) => {
     
     console.info(`Total NFTs minted: ${totalNFTs}`);
     
-    const nfts = [];
-    
-    // Fetch each NFT from ID 1 to totalNFTs
-    for (let nftId = 1; nftId <= totalNFTs; nftId++) {
-      try {
-        console.info(`Fetching NFT ${nftId}...`);
-        const nftResult = await foundContract.callTx.getDIDzNFTFromId(BigInt(nftId));
-        const nftData = nftResult.private.result;
-        
-        nfts.push({
-          nftId,
-          ownerAddress: toHex(nftData.ownerAddress),
-          metadataHash: toHex(nftData.metadataHash),
-          did: toHex(nftData.did),
-        });
-      } catch (error) {
-        // NFT might not exist (could be burned), skip it
-        console.warn(`NFT ${nftId} not found, skipping...`);
-        continue;
-      }
+    // Early return for empty contracts
+    if (totalNFTs === 0) {
+      console.info('No NFTs found, returning empty list');
+      const response = {
+        success: true,
+        data: {
+          nfts: [],
+          totalCount: 0,
+          maxNftId: 0,
+          message: 'NFTs retrieved successfully',
+        },
+      };
+      return res.status(200).json(response);
     }
     
-    console.info(`Successfully retrieved ${nfts.length} NFTs`);
+    const nfts = [];
+    
+    // Fetch NFTs in parallel for better performance, but limit concurrency to avoid overwhelming the system
+    console.info(`Fetching ${totalNFTs} NFTs with controlled concurrency...`);
+    const BATCH_SIZE = 5; // Process 5 NFTs at a time to balance speed and resource usage
+    
+    for (let i = 1; i <= totalNFTs; i += BATCH_SIZE) {
+      const batchEnd = Math.min(i + BATCH_SIZE - 1, totalNFTs);
+      console.info(`Processing NFTs ${i} to ${batchEnd}...`);
+      
+      const batchPromises = [];
+      for (let nftId = i; nftId <= batchEnd; nftId++) {
+        const nftPromise = foundContract.callTx.getDIDzNFTFromId(BigInt(nftId))
+          .then(async nftResult => {
+            const nftData = nftResult.private.result;
+            const baseNftInfo: EnhancedNFTData = {
+              nftId,
+              ownerAddress: toHex(nftData.ownerAddress),
+              metadataHash: toHex(nftData.metadataHash),
+              did: toHex(nftData.did),
+            };
+
+            // If metadata fetching is requested, attempt to decode it
+            if (includeMetadata === 'true') {
+              console.log(`Attempting to fetch metadata for NFT ${nftId}...`);
+              
+              // Note: We don't have the IPFS URI stored on-chain in this contract version
+              // The metadata hash is just a verification hash, not a pointer to IPFS
+              // For now, we'll just indicate that metadata fetching is not available
+              // In a future version, we could store IPFS CIDs on-chain or use a mapping service
+              
+              baseNftInfo.metadataVerified = false;
+              // Don't assign undefined explicitly - leave properties unset
+              
+              console.log(`Metadata fetching not available for NFT ${nftId} - no IPFS URI stored on-chain`);
+            }
+
+            return baseNftInfo;
+          })
+          .catch(error => {
+            console.error(`Error fetching NFT ${nftId} after retries:`, error);
+            console.error(`Error details for NFT ${nftId}:`, {
+              message: error instanceof Error ? error.message : 'Unknown error',
+              stack: error instanceof Error ? error.stack : undefined,
+              type: typeof error,
+              error: error
+            });
+            return null; // Return null for missing NFTs
+          });
+        
+        batchPromises.push(nftPromise);
+      }
+      
+      // Wait for this batch to complete
+      const batchResults = await Promise.all(batchPromises);
+      
+      // Filter out null results and add to main array
+      const validBatchNfts = batchResults.filter(nft => nft !== null);
+      nfts.push(...validBatchNfts);
+      
+      console.info(`Batch complete. Retrieved ${validBatchNfts.length}/${batchResults.length} NFTs from this batch.`);
+    }
+    
+    console.info(`Successfully retrieved ${nfts.length} NFTs out of ${totalNFTs} total`);
     
     const response = {
       success: true,
@@ -397,9 +467,13 @@ app.get('/api/nfts/:contractAddress', async (req: Request, res: Response) => {
     };
     
     return res.status(200).json(response);
+      })() // Close the async function
+    ]); // Close Promise.race
+    
+    return result;
   } catch (error) {
-    logger.error('Error in list-nfts endpoint:', error);
-    logger.error('Error details:', {
+    console.error('Error in list-nfts endpoint:', error);
+    console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       type: typeof error,
@@ -551,10 +625,10 @@ const server = app.listen(config.port, () => {
   logger.info(`Network: ${config.midnight.indexer}`);
 });
 
-// Set server timeout to 2 minutes for contract deployment operations
-server.timeout = 120000; // 2 minutes
-server.keepAliveTimeout = 65000; // Slightly longer than client timeout
-server.headersTimeout = 66000; // Slightly longer than keepAliveTimeout
+// Set server timeout for contract operations
+server.timeout = 360000; // 6 minutes - very tolerant for testnet POC
+server.keepAliveTimeout = 310000; // Slightly longer than client timeout
+server.headersTimeout = 320000; // Slightly longer than keepAliveTimeout
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

@@ -54,7 +54,7 @@ const currentDir = path.resolve(__dirname);
 
 export const combinedContractConfig = {
   privateStateStoreName: 'combinedContractPrivateState',
-  zkConfigPath: path.resolve(currentDir, '..', '..', 'nft-contract', 'src', 'managed', 'combinedContract'),
+  zkConfigPath: path.resolve(currentDir, '..', '..', 'nft-contract', 'dist', 'managed', 'combinedContract'),
 };
 
 export interface Config {
