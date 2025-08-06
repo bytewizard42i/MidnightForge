@@ -88,6 +88,7 @@ describe('Mint NFT Endpoint Tests', () => {
       const requestBody = {
         contractAddress: contractAddress,
         metadataHash,
+        metadataCID: 'QmTestCIDForNFTMetadata123456789',
         did,
       };
       
@@ -128,6 +129,7 @@ describe('Mint NFT Endpoint Tests', () => {
         },
         body: JSON.stringify({
           metadataHash: generateRandomHex32(),
+          metadataCID: 'QmTestCIDForNFTMetadata123456789',
           did: generateRandomHex32(),
         }),
       });
@@ -147,6 +149,7 @@ describe('Mint NFT Endpoint Tests', () => {
         },
         body: JSON.stringify({
           contractAddress,
+          metadataCID: 'QmTestCIDForNFTMetadata123456789',
           did: generateRandomHex32(),
         }),
       });
@@ -167,6 +170,7 @@ describe('Mint NFT Endpoint Tests', () => {
         body: JSON.stringify({
           contractAddress,
           metadataHash: generateRandomHex32(),
+          metadataCID: 'QmTestCIDForNFTMetadata123456789',
         }),
       });
 
@@ -186,11 +190,12 @@ describe('Mint NFT Endpoint Tests', () => {
         body: JSON.stringify({
           contractAddress,
           metadataHash: 'invalid_short_hash',
+          metadataCID: 'QmTestCIDForNFTMetadata123456789',
           did: generateRandomHex32(),
         }),
       });
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
       
       const result: any = await response.json();
       expect(result.success).toBe(false);
@@ -206,11 +211,12 @@ describe('Mint NFT Endpoint Tests', () => {
         body: JSON.stringify({
           contractAddress,
           metadataHash: generateRandomHex32(),
+          metadataCID: 'QmTestCIDForNFTMetadata123456789',
           did: 'invalid_short_did',
         }),
       });
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
       
       const result: any = await response.json();
       expect(result.success).toBe(false);
@@ -228,6 +234,7 @@ describe('Mint NFT Endpoint Tests', () => {
         body: JSON.stringify({
           contractAddress: fakeContractAddress,
           metadataHash: generateRandomHex32(),
+          metadataCID: 'QmTestCIDForNFTMetadata123456789',
           did: generateRandomHex32(),
         }),
       });
@@ -259,6 +266,7 @@ describe('Mint NFT Endpoint Tests', () => {
           },
           body: JSON.stringify({
             contractAddress,
+            metadataCID: 'QmTestCIDForNFTMetadata123456789',
             ...nft,
           }),
         });

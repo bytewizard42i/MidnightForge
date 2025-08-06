@@ -91,6 +91,7 @@ const mintTestNFT = async (contractAddress: string, metadataHash?: string, did?:
     body: JSON.stringify({
       contractAddress,
       metadataHash: metadataHash || generateRandomHex32(),
+      metadataCID: 'QmTestCIDForNFTMetadata123456789',
       did: did || generateRandomHex32(),
     }),
   });
@@ -128,6 +129,7 @@ const mintTestNFTWithMetadata = async (contractAddress: string, nftId: number): 
     body: JSON.stringify({
       contractAddress,
       metadataHash,
+      metadataCID: 'QmTestCIDForNFTMetadata123456789',
       did,
     }),
   });

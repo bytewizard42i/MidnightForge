@@ -261,12 +261,45 @@ app.post('/api/mint-nft', async (req: Request, res: Response) => {
     logger.info('Minting DIDz NFT...');
     
     // Convert hex strings to bytes (only for metadata and DID, not contract address)
-    const metadataHashBytes = fromHex(metadataHash);
-    const didBytes = fromHex(did);
+    let metadataHashBytes: Uint8Array;
+    let didBytes: Uint8Array;
+    
+    try {
+      metadataHashBytes = fromHex(metadataHash);
+    } catch (error) {
+      const response: ApiResponse = {
+        success: false,
+        error: `Invalid metadataHash format: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+      return res.status(400).json(response);
+    }
+    
+    try {
+      didBytes = fromHex(did);
+    } catch (error) {
+      const response: ApiResponse = {
+        success: false,
+        error: `Invalid did format: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+      return res.status(400).json(response);
+    }
     
     // Verify they're exactly 32 bytes
-    if (metadataHashBytes.length !== 32) throw new Error(`Metadata hash must be 32 bytes, got ${metadataHashBytes.length}`);
-    if (didBytes.length !== 32) throw new Error(`DID must be 32 bytes, got ${didBytes.length}`);
+    if (metadataHashBytes.length !== 32) {
+      const response: ApiResponse = {
+        success: false,
+        error: `Metadata hash must be 32 bytes, got ${metadataHashBytes.length}`,
+      };
+      return res.status(400).json(response);
+    }
+    
+    if (didBytes.length !== 32) {
+      const response: ApiResponse = {
+        success: false,
+        error: `DID must be 32 bytes, got ${didBytes.length}`,
+      };
+      return res.status(400).json(response);
+    }
 
     const providers = await configureCombinedContractProviders(wallet, config.midnight);
     
